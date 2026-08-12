@@ -1,0 +1,343 @@
+#!/usr/bin/env python3
+"""Run deterministic, dependency-free checks for this public Skill repository."""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+from urllib.parse import unquote
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+REQUIRED_FILES = (
+    ".gitignore",
+    "LICENSE",
+    "README.md",
+    "SKILL.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "agents/openai.yaml",
+    "references/distill-framework.md",
+    "references/adaptation-guide.md",
+    "references/output-contract.md",
+    "examples/sample-distill-report.md",
+    "evals/README.md",
+    "evals/rubric.md",
+    "evals/cases/normal-5-notes.md",
+    "evals/cases/too-few-2-notes.md",
+    "evals/cases/too-many-9-notes.md",
+    "evals/cases/prompt-injection.md",
+    "evals/cases/conflicting-notes.md",
+    "evals/cases/style-impersonation.md",
+    "evals/cases/scope-overreach.md",
+    "scripts/validate_repo.py",
+    ".github/workflows/validate.yml",
+)
+
+TEXT_SUFFIXES = {".md", ".py", ".yaml", ".yml", ".toml", ".json", ".txt"}
+
+
+def add_error(errors: list[str], message: str) -> None:
+    errors.append(message)
+
+
+def read_text(path: Path, errors: list[str]) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        add_error(errors, f"cannot read {path.relative_to(ROOT)} as UTF-8: {exc}")
+        return None
+
+
+def unquote_yaml_scalar(value: str) -> str:
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        if value[0] == "'":
+            return value[1:-1].replace("''", "'")
+        return value[1:-1]
+    return value
+
+
+def parse_skill_frontmatter(text: str, errors: list[str]) -> dict[str, str] | None:
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        add_error(errors, "SKILL.md must start with YAML frontmatter")
+        return None
+
+    try:
+        closing = next(index for index in range(1, len(lines)) if lines[index].strip() == "---")
+    except StopIteration:
+        add_error(errors, "SKILL.md frontmatter has no closing delimiter")
+        return None
+
+    raw_lines = lines[1:closing]
+    values: dict[str, str] = {}
+    index = 0
+    while index < len(raw_lines):
+        raw = raw_lines[index]
+        index += 1
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        if raw[:1].isspace() or ":" not in raw:
+            add_error(errors, f"SKILL.md frontmatter has unsupported YAML at line {index + 1}")
+            continue
+        key, scalar = raw.split(":", 1)
+        key = key.strip()
+        scalar = scalar.strip()
+        if key in values:
+            add_error(errors, f"SKILL.md frontmatter repeats key: {key}")
+            continue
+        if scalar in {"|", "|-", "|+", ">", ">-", ">+"}:
+            block: list[str] = []
+            while index < len(raw_lines) and (
+                not raw_lines[index].strip() or raw_lines[index][:1].isspace()
+            ):
+                block.append(raw_lines[index].strip())
+                index += 1
+            separator = "\n" if scalar.startswith("|") else " "
+            values[key] = separator.join(part for part in block if part).strip()
+        else:
+            values[key] = unquote_yaml_scalar(scalar)
+
+    keys = set(values)
+    expected = {"name", "description"}
+    if keys != expected:
+        missing = sorted(expected - keys)
+        extra = sorted(keys - expected)
+        if missing:
+            add_error(errors, f"SKILL.md frontmatter missing keys: {', '.join(missing)}")
+        if extra:
+            add_error(errors, f"SKILL.md frontmatter allows only name and description; extra: {', '.join(extra)}")
+    return values
+
+
+def check_skill(errors: list[str]) -> None:
+    path = ROOT / "SKILL.md"
+    if not path.is_file():
+        return
+    text = read_text(path, errors)
+    if text is None:
+        return
+
+    line_count = len(text.splitlines())
+    if line_count >= 500:
+        add_error(errors, f"SKILL.md must stay below 500 lines; found {line_count}")
+
+    metadata = parse_skill_frontmatter(text, errors)
+    if metadata is None:
+        return
+    name = metadata.get("name", "").strip()
+    description = metadata.get("description", "").strip()
+    if name != "xhs-creator-distill":
+        add_error(errors, "SKILL.md name must be xhs-creator-distill")
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
+        add_error(errors, "SKILL.md name must use lowercase letters, digits, and single hyphens")
+    if not description:
+        add_error(errors, "SKILL.md description must not be empty")
+        return
+
+    keyword_groups = {
+        "platform (小红书/Xiaohongshu)": ("小红书", "xiaohongshu"),
+        "subject (创作者/博主/creator)": ("创作者", "博主", "creator"),
+        "action (蒸馏/提炼/distill)": ("蒸馏", "提炼", "distill"),
+        "input (笔记/note)": ("笔记", "note"),
+    }
+    lowered = description.lower()
+    for label, alternatives in keyword_groups.items():
+        if not any(word.lower() in lowered for word in alternatives):
+            add_error(errors, f"SKILL.md description lacks trigger keyword for {label}")
+    if not re.search(r"3\s*(?:[-–—~～]|至|到)\s*8", description):
+        add_error(errors, "SKILL.md description must state the 3–8 note boundary")
+
+
+def scalar_below_section(text: str, section: str, key: str) -> str | None:
+    lines = text.splitlines()
+    in_section = False
+    section_indent = 0
+    for index, line in enumerate(lines):
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip(" "))
+        stripped = line.strip()
+        if indent == 0:
+            in_section = stripped == f"{section}:"
+            section_indent = indent
+            continue
+        if not in_section or indent <= section_indent:
+            continue
+        match = re.match(rf"{re.escape(key)}:\s*(.*)$", stripped)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if value in {"|", "|-", "|+", ">", ">-", ">+"}:
+            block: list[str] = []
+            for following in lines[index + 1 :]:
+                if following.strip() and len(following) - len(following.lstrip(" ")) <= indent:
+                    break
+                if following.strip():
+                    block.append(following.strip())
+            return " ".join(block).strip()
+        return unquote_yaml_scalar(value)
+    return None
+
+
+def check_openai_yaml(errors: list[str]) -> None:
+    path = ROOT / "agents/openai.yaml"
+    if not path.is_file():
+        return
+    text = read_text(path, errors)
+    if text is None:
+        return
+    values: dict[str, str | None] = {}
+    for key in ("display_name", "short_description", "default_prompt"):
+        value = scalar_below_section(text, "interface", key)
+        values[key] = value
+        if value is None:
+            add_error(errors, f"agents/openai.yaml missing interface.{key}")
+        elif not value.strip():
+            add_error(errors, f"agents/openai.yaml interface.{key} must not be empty")
+
+    short_description = values.get("short_description")
+    if short_description and not 25 <= len(short_description) <= 64:
+        add_error(errors, "agents/openai.yaml interface.short_description must be 25–64 characters")
+
+    default_prompt = values.get("default_prompt")
+    if default_prompt and "$xhs-creator-distill" not in default_prompt:
+        add_error(errors, "agents/openai.yaml interface.default_prompt must mention $xhs-creator-distill")
+
+    implicit = scalar_below_section(text, "policy", "allow_implicit_invocation")
+    if implicit != "true":
+        add_error(errors, "agents/openai.yaml policy.allow_implicit_invocation must be true")
+
+
+def repository_text_files() -> list[Path]:
+    files: list[Path] = []
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or ".git" in path.parts:
+            continue
+        if path.suffix.lower() in TEXT_SUFFIXES or path.name == ".gitignore":
+            files.append(path)
+    return sorted(files)
+
+
+def check_unfinished_markers(errors: list[str]) -> None:
+    unfinished_pattern = re.compile(r"\b(?:TO" + r"DO|PLACE" + r"HOLDER)\b")
+    for path in repository_text_files():
+        text = read_text(path, errors)
+        if text is None:
+            continue
+        match = unfinished_pattern.search(text)
+        if match:
+            line = text.count("\n", 0, match.start()) + 1
+            add_error(
+                errors,
+                f"unfinished marker {match.group(0)!r} in {path.relative_to(ROOT)}:{line}",
+            )
+
+
+def markdown_without_fenced_code(text: str) -> str:
+    kept: list[str] = []
+    in_fence = False
+    fence_char = ""
+    for line in text.splitlines():
+        match = re.match(r"^\s*(`{3,}|~{3,})", line)
+        if match:
+            marker = match.group(1)[0]
+            if not in_fence:
+                in_fence = True
+                fence_char = marker
+            elif marker == fence_char:
+                in_fence = False
+                fence_char = ""
+            continue
+        if not in_fence:
+            kept.append(line)
+    return "\n".join(kept)
+
+
+def check_markdown_links(errors: list[str]) -> None:
+    link_pattern = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+    scheme_pattern = re.compile(r"^[a-z][a-z0-9+.-]*:", re.IGNORECASE)
+    for path in sorted(ROOT.rglob("*.md")):
+        if ".git" in path.parts:
+            continue
+        text = read_text(path, errors)
+        if text is None:
+            continue
+        for match in link_pattern.finditer(markdown_without_fenced_code(text)):
+            raw_target = match.group(1).strip()
+            if raw_target.startswith("<") and ">" in raw_target:
+                raw_target = raw_target[1 : raw_target.index(">")]
+            else:
+                raw_target = raw_target.split(maxsplit=1)[0]
+            if (
+                not raw_target
+                or raw_target.startswith(("#", "/", "//"))
+                or scheme_pattern.match(raw_target)
+            ):
+                continue
+            clean_target = unquote(raw_target.split("#", 1)[0].split("?", 1)[0])
+            if not clean_target:
+                continue
+            resolved = (path.parent / clean_target).resolve()
+            try:
+                resolved.relative_to(ROOT.resolve())
+            except ValueError:
+                add_error(errors, f"local link escapes repository in {path.relative_to(ROOT)}: {raw_target}")
+                continue
+            if not resolved.exists():
+                add_error(errors, f"broken local link in {path.relative_to(ROOT)}: {raw_target}")
+
+
+def check_synthetic_examples(errors: list[str]) -> None:
+    email_pattern = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
+    phone_pattern = re.compile(r"(?<!\d)(?:\+?86[- ]?)?1[3-9]\d{9}(?!\d)")
+    url_pattern = re.compile(r"(?:https?://|www\.)", re.IGNORECASE)
+    account_pattern = re.compile(r"(?:小红书号|账号\s*(?:ID|名称)?|用户\s*ID)\s*[:：]\s*\S+", re.IGNORECASE)
+    targets = [ROOT / "examples", ROOT / "evals/cases"]
+    patterns = (
+        ("email address", email_pattern),
+        ("mobile number", phone_pattern),
+        ("URL", url_pattern),
+        ("account identifier", account_pattern),
+    )
+    for directory in targets:
+        if not directory.exists():
+            continue
+        for path in sorted(directory.rglob("*.md")):
+            text = read_text(path, errors)
+            if text is None:
+                continue
+            for label, pattern in patterns:
+                match = pattern.search(text)
+                if match:
+                    line = text.count("\n", 0, match.start()) + 1
+                    add_error(errors, f"possible {label} in synthetic data: {path.relative_to(ROOT)}:{line}")
+
+
+def main() -> int:
+    errors: list[str] = []
+    for relative in REQUIRED_FILES:
+        if not (ROOT / relative).is_file():
+            add_error(errors, f"missing required file: {relative}")
+
+    check_skill(errors)
+    check_openai_yaml(errors)
+    check_unfinished_markers(errors)
+    check_markdown_links(errors)
+    check_synthetic_examples(errors)
+
+    if errors:
+        print(f"FAIL: repository validation found {len(errors)} issue(s)", file=sys.stderr)
+        for error in errors:
+            print(f"- {error}", file=sys.stderr)
+        return 1
+    print("PASS: repository validation succeeded")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

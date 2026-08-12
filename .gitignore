@@ -1,0 +1,25 @@
+# macOS and Windows metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local secrets and runtime output
+.env
+.env.*
+!.env.example
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+__pycache__/
+*.py[cod]

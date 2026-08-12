@@ -1,0 +1,41 @@
+name: 功能建议
+description: 提议新的使用场景或可验证改进
+title: "[Feature]: "
+labels: []
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: 使用场景
+      description: 说明当前遇到的问题，而不只是期望的实现方式。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+      description: 说明期望行为、适用边界和不应发生的行为。
+    validations:
+      required: true
+  - type: textarea
+    id: evaluation
+    attributes:
+      label: 验收方式
+      description: 描述可以用合成数据复现的输入和预期关键结果。
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 已考虑的替代方案
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: 提交确认
+      options:
+        - label: 示例均为虚构合成内容，不含真实个人信息或第三方原文。
+          required: true
+        - label: 我理解该项目不保证爆款、流量或平台审核结果。
+          required: true
