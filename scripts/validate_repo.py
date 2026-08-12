@@ -10,6 +10,17 @@ from urllib.parse import unquote
 
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE_VERSION = "v0.2.1"
+
+REAL_WORLD_ALLOWED_URLS = {
+    "https://theakram.com/compose-on-the-web",
+    "https://theakram.com/kmp-ios-granular-dependencies",
+    "https://theakram.com/kotlin-html-parser",
+    "https://theakram.com/understanding-jetpack-compose",
+    "https://theakram.com/2023/08/05/building-a-server-using-ktor/",
+    "https://theakram.com/license/",
+    "https://creativecommons.org/licenses/by-sa/4.0/",
+}
 
 REQUIRED_FILES = (
     ".gitignore",
@@ -44,7 +55,13 @@ REQUIRED_FILES = (
     "evals/cases/whole-account-package.md",
     "evals/cases/unsafe-archive-package.md",
     "evals/cases/multilingual-output.md",
+    "validation/real-world/README.md",
+    "validation/real-world/THIRD_PARTY_NOTICES.md",
+    "validation/real-world/access-boundaries-v0.2.1.md",
+    "validation/real-world/cc-by-sa/LICENSE.md",
+    "validation/real-world/cc-by-sa/akram-quick-set-v0.2.1.md",
     "scripts/validate_repo.py",
+    "scripts/test_validate_repo.py",
     ".github/workflows/validate.yml",
 )
 
@@ -348,11 +365,12 @@ def check_markdown_links(errors: list[str]) -> None:
 def check_readme_sync(errors: list[str]) -> None:
     required_fragments = (
         "npx skills add aiiqc/xhs-creator-distill",
-        "git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git",
+        f"git clone --branch {RELEASE_VERSION} --depth 1 https://github.com/aiiqc/xhs-creator-distill.git",
         "QUICK_SET",
         "PUBLIC_SAMPLE",
         "ACCOUNT_PACKAGE",
-        "v0.2.0",
+        RELEASE_VERSION,
+        "validation/real-world/",
         "60",
     )
     safety_fragments = {
@@ -454,6 +472,104 @@ def check_synthetic_examples(errors: list[str]) -> None:
                 add_error(errors, f"possible account identifier in synthetic data: {path.relative_to(ROOT)}:{line}")
 
 
+def check_real_world_validation(errors: list[str]) -> None:
+    directory = ROOT / "validation/real-world"
+    if not directory.is_dir():
+        add_error(errors, "missing real-world validation directory")
+        return
+
+    markdown_files: list[Path] = []
+    for path in sorted(directory.rglob("*")):
+        if path.is_symlink():
+            add_error(errors, f"symlink is not allowed in real-world validation: {path.relative_to(ROOT)}")
+            continue
+        if not path.is_file():
+            continue
+        relative_parts = path.relative_to(directory).parts
+        if any(part in {"raw", ".private", "browser-profile"} for part in relative_parts):
+            add_error(errors, f"private real-world artifact entered repository: {path.relative_to(ROOT)}")
+        if path.suffix.lower() != ".md":
+            add_error(errors, f"raw or unsupported real-world artifact: {path.relative_to(ROOT)}")
+            continue
+        markdown_files.append(path)
+
+    required_fragments = {
+        "validation/real-world/README.md": (
+            "MAINTAINER_SELF_TEST",
+            "CROSS_PLATFORM_PROTOCOL_ONLY",
+            "ANONYMOUS_ACCESS_SMOKE",
+            "不是独立外部用户采用",
+        ),
+        "validation/real-world/THIRD_PARTY_NOTICES.md": (
+            "Mohammed Akram Hussain",
+            "CC BY-SA 4.0",
+            "未参与、认可或背书",
+        ),
+        "validation/real-world/access-boundaries-v0.2.1.md": (
+            "MAINTAINER_SELF_TEST + ANONYMOUS_ACCESS_SMOKE + OUT_OF_SCOPE",
+            "MAINTAINER_SELF_TEST + PUBLIC_SAMPLE + EXPECTED_HOLD",
+            "expected=HOLD",
+            "actual=HOLD",
+            "boundary_result=PASS",
+            "NOT EVALUATED",
+            "不是小红书正向 E2E",
+        ),
+        "validation/real-world/cc-by-sa/LICENSE.md": (
+            "Creative Commons Attribution–ShareAlike 4.0 International",
+            "相同许可证",
+        ),
+        "validation/real-world/cc-by-sa/akram-quick-set-v0.2.1.md": (
+            "SPDX-License-Identifier: CC-BY-SA-4.0",
+            "MAINTAINER_SELF_TEST + QUICK_SET + CROSS_PLATFORM_PROTOCOL_ONLY",
+            "执行日期",
+            "被测核心",
+            "状态：PASS",
+            "不是独立外部采用",
+            "不是小红书正向 E2E",
+        ),
+    }
+
+    url_pattern = re.compile(r"https?://[^\s)\]<>]+", re.IGNORECASE)
+    forbidden_source_pattern = re.compile(
+        r"https?://(?:www\.)?(?:x\.com|twitter\.com|xiaohongshu\.com|xhslink\.cn)/",
+        re.IGNORECASE,
+    )
+    sensitive_header_pattern = re.compile(
+        r"(?im)^\s*(?:authorization|cookie|set-cookie)\s*:|\bbearer\s+[A-Za-z0-9._~-]{8,}"
+    )
+    raw_markup_pattern = re.compile(r"(?i)<(?:html|script|body|meta)\b")
+
+    for relative, fragments in required_fragments.items():
+        path = ROOT / relative
+        if not path.is_file():
+            continue
+        text = read_text(path, errors)
+        if text is None:
+            continue
+        for fragment in fragments:
+            if fragment not in text:
+                add_error(errors, f"{relative} is missing real-world boundary: {fragment}")
+
+    for path in markdown_files:
+        relative = str(path.relative_to(ROOT))
+        text = read_text(path, errors)
+        if text is None:
+            continue
+        if forbidden_source_pattern.search(text):
+            add_error(errors, f"{relative} contains a forbidden public-account or post URL")
+        if "xhslink.cn/" in text or "xhslink.cn?" in text or "xhslink.cn#" in text:
+            add_error(errors, f"{relative} contains a recoverable Xiaohongshu short-link path")
+        if sensitive_header_pattern.search(text):
+            add_error(errors, f"{relative} contains a credential-shaped header or bearer value")
+        if raw_markup_pattern.search(text):
+            add_error(errors, f"{relative} contains raw webpage markup")
+        for match in url_pattern.finditer(text):
+            candidate = match.group(0).rstrip(".,;:")
+            if candidate not in REAL_WORLD_ALLOWED_URLS:
+                line = text.count("\n", 0, match.start()) + 1
+                add_error(errors, f"unapproved URL in real-world validation: {relative}:{line}")
+
+
 def main() -> int:
     errors: list[str] = []
     for relative in REQUIRED_FILES:
@@ -466,6 +582,7 @@ def main() -> int:
     check_markdown_links(errors)
     check_readme_sync(errors)
     check_synthetic_examples(errors)
+    check_real_world_validation(errors)
 
     if errors:
         print(f"FAIL: repository validation found {len(errors)} issue(s)", file=sys.stderr)

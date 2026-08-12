@@ -6,6 +6,20 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-12
+
+### Added
+
+- 维护者真实世界自测：使用五篇同作者、CC BY-SA 4.0 公开博客验证 `QUICK_SET` 的证据、反例和五层输出协议。
+- 外部入口边界记录：区分 X 匿名页面响应烟雾测试与小红书短链的预期 `HOLD` 行为。
+- 第三方材料归属、独立许可证和原始制品留存边界。
+
+### Changed
+
+- 将真实世界自测与合成 `evals/cases` 隔离，明确维护者自测不等于外部采用或小红书正向 E2E。
+- 仓库验证器增加真实自测的来源白名单、许可证、敏感入口和原始制品检查，并用离线负向回归覆盖额外 Markdown、凭据形状内容、原始 HTML 和符号链接。
+- 五语 README 同步固定 `v0.2.1` 安装和当前维护版本。
+
 ## [0.2.0] - 2026-08-12
 
 ### Added
@@ -33,6 +47,7 @@
 - 输入安全、隐私、原创与诚实边界。
 - 合成示例、参考文档、基础评测与 GitHub 社区文件。
 
-[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.2.1
 [0.2.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.2.0
 [0.1.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.1.0

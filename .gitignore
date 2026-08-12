@@ -17,6 +17,14 @@ Thumbs.db
 !.env.example
 *.log
 
+# Private or raw real-world validation artifacts
+validation/**/raw/
+validation/**/.private/
+validation/**/browser-profile/
+*.har
+*.session
+cookies.txt
+
 # Temporary files
 *.tmp
 *.temp

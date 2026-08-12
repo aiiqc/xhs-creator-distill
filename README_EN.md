@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 Replace `/path/to/your/skills` with the actual directory, then reload the Skill according to the host’s instructions.
 
-### Pin `v0.2.0`
+### Pin `v0.2.1`
 
 To reproduce this reviewed release, clone the exact tag:
 
 ```bash
-git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.2.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## Quick start
@@ -164,7 +164,9 @@ To report a security or privacy issue, follow the [security policy](SECURITY.md)
 
 ## Examples and rights notice
 
-Examples and evaluations in this repository should be fictional, synthetic content that does not correspond to any real creator, account, brand, or published post.
+Examples and [`evals/cases`](evals/cases/) contain fictional, synthetic content that does not correspond to any real creator, account, brand, or published post.
+
+[`validation/real-world`](validation/real-world/) separately records constrained maintainer-run real-world tests with source, licensing, and evidence-level disclosures. These records are neither independent external adoption nor a positive Xiaohongshu E2E. Third-party derivative material is separately licensed as marked in its directory and is not automatically covered by the root MIT License.
 
 The [MIT License](LICENSE) covers only content that this repository’s authors or contributors have the right to license. It grants no rights to third-party posts, images, music, fonts, trademarks, likenesses, names, account data, or platform materials.
 
@@ -172,6 +174,7 @@ The [MIT License](LICENSE) covers only content that this repository’s authors 
 
 - [x] `v0.1.0`: 3–8 text-post inputs, evidence references, five-layer distillation, and honest boundaries.
 - [x] `v0.2.0`: quick public-account entry, full-account packages, coverage ledgers, stratified sampling, and multilingual documentation.
+- [x] `v0.2.1`: isolated real-world self-tests, rights attribution, and evidence for external-entry failure boundaries.
 - [ ] Add deterministic adapters for more common export formats without weakening path or privacy safety.
 - [ ] Improve the sampling and evidence protocols based on de-identified usage feedback.
 - [ ] Evaluate an optional workflow for generating an independent Skill from a distillation report; the current version does not provide this.
@@ -180,7 +183,7 @@ The roadmap is not a version commitment. Priorities may change based on validati
 
 ## Maintenance status
 
-The current version is `v0.2.0`. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
+The current version is `v0.2.1`. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
 
 - General questions and suggestions: use GitHub Issues.
 - Code and documentation contributions: read [CONTRIBUTING.md](CONTRIBUTING.md) first.

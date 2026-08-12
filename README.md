@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 将 `/path/to/your/skills` 替换为真实目录，再按宿主说明重新加载 Skill。
 
-### 固定 `v0.2.0` 安装
+### 固定 `v0.2.1` 安装
 
 需要重现本次已审查发布版时，请锁定 tag：
 
 ```bash
-git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.2.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 快速使用
@@ -160,7 +160,9 @@ git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill
 
 ## 示例与权利声明
 
-仓库内示例和评测均应为虚构合成内容，不对应任何真实博主、账号、品牌或已发布笔记。
+仓库内的示例和 [`evals/cases`](evals/cases/) 均为虚构合成内容，不对应任何真实博主、账号、品牌或已发布笔记。
+
+[`validation/real-world`](validation/real-world/) 单独记录受限的维护者真实世界自测，并保留来源、授权和证据层级；它不等于独立外部采用，也不等于小红书正向 E2E。第三方衍生材料按目录内标明的许可证单独授权，不自动适用根目录 MIT License。
 
 [MIT License](LICENSE) 只覆盖本仓库作者或贡献者有权许可的内容。它不授予你对第三方笔记、图片、音乐、字体、商标、肖像、姓名、账号数据或平台素材的任何权利。
 
@@ -168,6 +170,7 @@ git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill
 
 - [x] `v0.1.0`：3–8 篇文字输入、证据回引、五层蒸馏与诚实边界。
 - [x] `v0.2.0`：公开账号懒人入口、整号资料包、覆盖账本、分层取样和多语言说明。
+- [x] `v0.2.1`：发布隔离的真实世界自测、版权归属和外部入口失败边界证据。
 - [ ] 增加更多常见导出格式的确定性适配器，不降低路径和隐私安全。
 - [ ] 根据去标识化使用反馈优化取样和证据协议。
 - [ ] 评估“从蒸馏报告生成独立 Skill”的可选流程；当前版本不提供。
@@ -176,7 +179,7 @@ git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill
 
 ## 维护状态
 
-当前版本为 `v0.2.0`。项目按 [Semantic Versioning](https://semver.org/) 记录版本，并在 [CHANGELOG](CHANGELOG.md) 中说明变更。
+当前版本为 `v0.2.1`。项目按 [Semantic Versioning](https://semver.org/) 记录版本，并在 [CHANGELOG](CHANGELOG.md) 中说明变更。
 
 - 一般问题与建议：使用 GitHub Issues。
 - 代码与文档贡献：先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。

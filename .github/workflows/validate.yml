@@ -39,3 +39,6 @@ jobs:
 
       - name: Validate repository
         run: python3 scripts/validate_repo.py
+
+      - name: Test validation boundaries
+        run: python3 scripts/test_validate_repo.py

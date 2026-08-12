@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills` を実際のディレクトリに置き換え、ホストの説明に従ってスキルを再読み込みしてください。
 
-### `v0.2.0` に固定
+### `v0.2.1` に固定
 
 今回レビュー済みのリリースを再現するには、tag を固定してクローンします。
 
 ```bash
-git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.2.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## クイックスタート
@@ -160,7 +160,9 @@ $xhs-creator-distill を使って、このタスクに添付したアカウン�
 
 ## サンプルと権利に関する声明
 
-リポジトリ内のサンプルと評価はすべて架空の合成コンテンツであるべきで、実在するクリエイター、アカウント、ブランド、または公開済みのノートと対応するものではありません。
+リポジトリ内のサンプルと [`evals/cases`](evals/cases/) はすべて架空の合成コンテンツであり、実在するクリエイター、アカウント、ブランド、または公開済みのノートと対応しません。
+
+[`validation/real-world`](validation/real-world/) には、出典、ライセンス、証拠レベルを明示した限定的なメンテナー実行の実世界セルフテストを別途記録します。これは独立した外部採用でも、小紅書の肯定的な E2E でもありません。第三者素材に基づく派生物は各ディレクトリの表示に従って個別に許諾され、ルートの MIT License が自動的に適用されるものではありません。
 
 [MIT License](LICENSE) が適用されるのは、本リポジトリの著者またはコントリビューターが許諾する権利を有するコンテンツに限られます。第三者のノート、画像、音楽、フォント、商標、肖像、氏名、アカウントデータ、プラットフォーム素材に対するいかなる権利も付与されません。
 
@@ -168,6 +170,7 @@ $xhs-creator-distill を使って、このタスクに添付したアカウン�
 
 - [x] `v0.1.0`：3〜8件のテキスト入力、根拠への参照、5階層の抽出、誠実性の境界。
 - [x] `v0.2.0`：公開アカウントの手軽な入口、アカウント全体の資料パッケージ、カバレッジ台帳、階層的サンプリング、多言語ドキュメント。
+- [x] `v0.2.1`：分離された実世界セルフテスト、権利帰属、外部入口の失敗境界に関する証拠。
 - [ ] パスとプライバシーの安全性を低下させず、一般的なエクスポート形式向けの決定論的アダプターをさらに追加する。
 - [ ] 匿名化された利用者からのフィードバックに基づき、サンプリングと根拠のプロトコルを改善する。
 - [ ] 「抽出レポートから独立したスキルを生成する」オプションのワークフローを評価する。現バージョンでは提供しない。
@@ -176,7 +179,7 @@ $xhs-creator-distill を使って、このタスクに添付したアカウン�
 
 ## メンテナンス状況
 
-現在のバージョンは `v0.2.0` です。本プロジェクトは [Semantic Versioning](https://semver.org/) に従ってバージョンを管理し、変更内容を [CHANGELOG](CHANGELOG.md) に記載します。
+現在のバージョンは `v0.2.1` です。本プロジェクトは [Semantic Versioning](https://semver.org/) に従ってバージョンを管理し、変更内容を [CHANGELOG](CHANGELOG.md) に記載します。
 
 - 一般的な問題と提案：GitHub Issuesを使用してください。
 - コードとドキュメントの貢献：まず [CONTRIBUTING.md](CONTRIBUTING.md) をお読みください。

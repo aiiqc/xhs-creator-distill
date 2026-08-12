@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills`를 실제 디렉터리로 바꾸고 호스트 안내에 따라 Skill을 다시 로드하세요.
 
-### `v0.2.0` 고정
+### `v0.2.1` 고정
 
 이번에 검토한 릴리스를 재현하려면 정확한 tag를 고정해 클론하세요.
 
 ```bash
-git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.2.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 빠른 사용법
@@ -160,7 +160,9 @@ $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기
 
 ## 예제 및 권리 고지
 
-저장소의 예제와 평가는 모두 가상으로 제작된 콘텐츠여야 하며, 실제 크리에이터, 계정, 브랜드 또는 게시된 노트와 관련이 없습니다.
+저장소의 예제와 [`evals/cases`](evals/cases/)는 모두 가상으로 제작된 콘텐츠이며, 실제 크리에이터, 계정, 브랜드 또는 게시된 노트와 관련이 없습니다.
+
+[`validation/real-world`](validation/real-world/)에는 출처, 라이선스, 증거 수준을 명시한 제한적인 유지보수자 실행 실제 환경 자체 테스트를 별도로 기록합니다. 이는 독립적인 외부 채택이나 샤오홍수의 긍정적 E2E가 아닙니다. 제3자 자료를 바탕으로 한 파생물은 해당 디렉터리에 표시된 별도 라이선스를 따르며 루트 MIT License가 자동 적용되지 않습니다.
 
 [MIT License](LICENSE)는 이 저장소의 작성자 또는 기여자가 허가할 권리를 갖고 있는 콘텐츠에만 적용됩니다. 제3자의 노트, 이미지, 음악, 글꼴, 상표, 초상, 이름, 계정 데이터 또는 플랫폼 소재에 대한 어떤 권리도 부여하지 않습니다.
 
@@ -168,6 +170,7 @@ $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기
 
 - [x] `v0.1.0`: 3–8개 텍스트 입력, 근거 역추적, 5계층 추출, 정직성 경계.
 - [x] `v0.2.0`: 공개 계정 간편 입력, 전체 계정 자료 패키지, 커버리지 원장, 층화 샘플링, 다국어 문서.
+- [x] `v0.2.1`: 분리된 실제 환경 자체 테스트, 권리 귀속, 외부 진입점 실패 경계 증거.
 - [ ] 경로 및 개인정보 안전성을 낮추지 않으면서 보다 많은 일반적인 내보내기 형식을 위한 결정론적 어댑터를 추가합니다.
 - [ ] 비식별화된 사용 피드백을 바탕으로 샘플링과 근거 프로토콜을 개선합니다.
 - [ ] “추출 보고서에서 독립 Skill 생성”을 선택 사항으로 제공하는 워크플로를 검토합니다. 현재 버전에서는 제공하지 않습니다.
@@ -176,7 +179,7 @@ $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기
 
 ## 유지보수 상태
 
-현재 버전은 `v0.2.0`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
+현재 버전은 `v0.2.1`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
 
 - 일반 문의 및 제안: GitHub Issues를 사용하세요.
 - 코드 및 문서 기여: 먼저 [CONTRIBUTING.md](CONTRIBUTING.md)를 읽어 보세요.
