@@ -15,11 +15,16 @@ REQUIRED_FILES = (
     ".gitignore",
     "LICENSE",
     "README.md",
+    "README_ZH-TW.md",
+    "README_EN.md",
+    "README_JA.md",
+    "README_KO.md",
     "SKILL.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
     "agents/openai.yaml",
+    "references/account-modes.md",
     "references/distill-framework.md",
     "references/adaptation-guide.md",
     "references/output-contract.md",
@@ -33,11 +38,27 @@ REQUIRED_FILES = (
     "evals/cases/conflicting-notes.md",
     "evals/cases/style-impersonation.md",
     "evals/cases/scope-overreach.md",
+    "evals/cases/public-account-sample.md",
+    "evals/cases/public-account-blocked.md",
+    "evals/cases/public-account-ambiguous.md",
+    "evals/cases/whole-account-package.md",
+    "evals/cases/unsafe-archive-package.md",
+    "evals/cases/multilingual-output.md",
     "scripts/validate_repo.py",
     ".github/workflows/validate.yml",
 )
 
 TEXT_SUFFIXES = {".md", ".py", ".yaml", ".yml", ".toml", ".json", ".txt"}
+
+README_FILES = (
+    "README.md",
+    "README_ZH-TW.md",
+    "README_EN.md",
+    "README_JA.md",
+    "README_KO.md",
+)
+
+MODE_CODES = ("QUICK_SET", "PUBLIC_SAMPLE", "ACCOUNT_PACKAGE")
 
 
 def add_error(errors: list[str], message: str) -> None:
@@ -100,6 +121,16 @@ def parse_skill_frontmatter(text: str, errors: list[str]) -> dict[str, str] | No
             separator = "\n" if scalar.startswith("|") else " "
             values[key] = separator.join(part for part in block if part).strip()
         else:
+            is_quoted = len(scalar) >= 2 and scalar[0] == scalar[-1] and scalar[0] in {"'", '"'}
+            non_string_plain = (
+                scalar.lower() in {"null", "true", "false", "~"}
+                or bool(re.fullmatch(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)", scalar))
+                or scalar.startswith(("[", "{", "!", "&", "*"))
+                or ": " in scalar
+                or " #" in scalar
+            )
+            if scalar and not is_quoted and non_string_plain:
+                add_error(errors, f"SKILL.md frontmatter {key} must be a YAML string")
             values[key] = unquote_yaml_scalar(scalar)
 
     keys = set(values)
@@ -135,9 +166,15 @@ def check_skill(errors: list[str]) -> None:
         add_error(errors, "SKILL.md name must be xhs-creator-distill")
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
         add_error(errors, "SKILL.md name must use lowercase letters, digits, and single hyphens")
+    if len(name) > 64:
+        add_error(errors, "SKILL.md name must not exceed 64 characters")
     if not description:
         add_error(errors, "SKILL.md description must not be empty")
         return
+    if len(description) > 1024:
+        add_error(errors, "SKILL.md description must not exceed 1024 characters")
+    if "<" in description or ">" in description:
+        add_error(errors, "SKILL.md description must not contain angle brackets")
 
     keyword_groups = {
         "platform (小红书/Xiaohongshu)": ("小红书", "xiaohongshu"),
@@ -151,6 +188,18 @@ def check_skill(errors: list[str]) -> None:
             add_error(errors, f"SKILL.md description lacks trigger keyword for {label}")
     if not re.search(r"3\s*(?:[-–—~～]|至|到)\s*8", description):
         add_error(errors, "SKILL.md description must state the 3–8 note boundary")
+    account_triggers = ("公开账号", "公開帳號", "account analysis")
+    if not any(trigger in lowered for trigger in account_triggers):
+        add_error(errors, "SKILL.md description must advertise public-account analysis")
+    package_triggers = ("资料包", "資料包", "export")
+    if not any(trigger in lowered for trigger in package_triggers):
+        add_error(errors, "SKILL.md description must advertise account-package or export input")
+    for mode in MODE_CODES:
+        if mode not in text:
+            add_error(errors, f"SKILL.md must define mode code {mode}")
+    for label in ("High", "Medium", "Low", "높음", "보통", "낮음"):
+        if label not in text:
+            add_error(errors, f"SKILL.md must define multilingual confidence label {label}")
 
 
 def scalar_below_section(text: str, section: str, key: str) -> str | None:
@@ -207,6 +256,10 @@ def check_openai_yaml(errors: list[str]) -> None:
     default_prompt = values.get("default_prompt")
     if default_prompt and "$xhs-creator-distill" not in default_prompt:
         add_error(errors, "agents/openai.yaml interface.default_prompt must mention $xhs-creator-distill")
+    if default_prompt:
+        prompt_keywords = ("公开账号", "公開帳號", "资料包", "資料包", "account", "package")
+        if not any(keyword in default_prompt.lower() for keyword in prompt_keywords):
+            add_error(errors, "agents/openai.yaml default prompt must mention an account mode")
 
     implicit = scalar_below_section(text, "policy", "allow_implicit_invocation")
     if implicit != "true":
@@ -292,17 +345,89 @@ def check_markdown_links(errors: list[str]) -> None:
                 add_error(errors, f"broken local link in {path.relative_to(ROOT)}: {raw_target}")
 
 
+def check_readme_sync(errors: list[str]) -> None:
+    required_fragments = (
+        "npx skills add aiiqc/xhs-creator-distill",
+        "git clone --branch v0.2.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git",
+        "QUICK_SET",
+        "PUBLIC_SAMPLE",
+        "ACCOUNT_PACKAGE",
+        "v0.2.0",
+        "60",
+    )
+    safety_fragments = {
+        "README.md": ("不登录", "不使用 Cookie", "不得声称全量", "未向平台独立验证"),
+        "README_ZH-TW.md": ("不登入", "不使用 Cookie", "不得宣稱為全量", "未向平台獨立驗證"),
+        "README_EN.md": (
+            "does not log in",
+            "use cookies",
+            "must not be presented as complete coverage",
+            "not independently verified against the platform",
+        ),
+        "README_JA.md": (
+            "ログイン",
+            "Cookie",
+            "全件を対象にしたとは表現できません",
+            "全データと照合して独立検証",
+        ),
+        "README_KO.md": (
+            "로그인",
+            "Cookie",
+            "전체 데이터를 다루었다고 주장해서는 안 됩니다",
+            "실제 전체 데이터와 대조해",
+        ),
+    }
+    canonical = read_text(ROOT / "README.md", errors)
+    canonical_shape: tuple[int, int, int, int] | None = None
+    if canonical is not None:
+        canonical_shape = (
+            len(re.findall(r"^## ", canonical, re.MULTILINE)),
+            len(re.findall(r"^### ", canonical, re.MULTILINE)),
+            len(re.findall(r"^```", canonical, re.MULTILINE)),
+            len(re.findall(r"^\| ", canonical, re.MULTILINE)),
+        )
+
+    for relative in README_FILES:
+        path = ROOT / relative
+        if not path.is_file():
+            continue
+        text = read_text(path, errors)
+        if text is None:
+            continue
+        for fragment in required_fragments:
+            if fragment not in text:
+                add_error(errors, f"{relative} is missing synchronized fragment: {fragment}")
+        for fragment in safety_fragments[relative]:
+            if fragment not in text:
+                add_error(errors, f"{relative} is missing synchronized safety boundary: {fragment}")
+        required_links = tuple(f"({name})" for name in README_FILES if name != relative)
+        for link in required_links:
+            if link not in text:
+                add_error(errors, f"{relative} is missing language navigation link: {link}")
+        if canonical_shape is not None:
+            shape = (
+                len(re.findall(r"^## ", text, re.MULTILINE)),
+                len(re.findall(r"^### ", text, re.MULTILINE)),
+                len(re.findall(r"^```", text, re.MULTILINE)),
+                len(re.findall(r"^\| ", text, re.MULTILINE)),
+            )
+            if shape != canonical_shape:
+                add_error(
+                    errors,
+                    f"{relative} structure differs from README.md "
+                    f"(H2, H3, fences, table rows: {shape} != {canonical_shape})",
+                )
+
+
 def check_synthetic_examples(errors: list[str]) -> None:
     email_pattern = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
     phone_pattern = re.compile(r"(?<!\d)(?:\+?86[- ]?)?1[3-9]\d{9}(?!\d)")
-    url_pattern = re.compile(r"(?:https?://|www\.)", re.IGNORECASE)
+    url_pattern = re.compile(r"(?:https?://[^\s`)>\]]+|www\.[^\s`)>\]]+)", re.IGNORECASE)
     account_pattern = re.compile(r"(?:小红书号|账号\s*(?:ID|名称)?|用户\s*ID)\s*[:：]\s*\S+", re.IGNORECASE)
     targets = [ROOT / "examples", ROOT / "evals/cases"]
     patterns = (
         ("email address", email_pattern),
         ("mobile number", phone_pattern),
-        ("URL", url_pattern),
-        ("account identifier", account_pattern),
     )
     for directory in targets:
         if not directory.exists():
@@ -316,6 +441,17 @@ def check_synthetic_examples(errors: list[str]) -> None:
                 if match:
                     line = text.count("\n", 0, match.start()) + 1
                     add_error(errors, f"possible {label} in synthetic data: {path.relative_to(ROOT)}:{line}")
+            for match in url_pattern.finditer(text):
+                candidate = match.group(0).rstrip(".,;:")
+                if re.fullmatch(r"https://example\.invalid(?:/[A-Za-z0-9._~!$&'*+,;=:@%/-]*)?", candidate):
+                    continue
+                line = text.count("\n", 0, match.start()) + 1
+                add_error(errors, f"possible URL in synthetic data: {path.relative_to(ROOT)}:{line}")
+            for match in account_pattern.finditer(text):
+                if "example.invalid" in match.group(0):
+                    continue
+                line = text.count("\n", 0, match.start()) + 1
+                add_error(errors, f"possible account identifier in synthetic data: {path.relative_to(ROOT)}:{line}")
 
 
 def main() -> int:
@@ -328,6 +464,7 @@ def main() -> int:
     check_openai_yaml(errors)
     check_unfinished_markers(errors)
     check_markdown_links(errors)
+    check_readme_sync(errors)
     check_synthetic_examples(errors)
 
     if errors:

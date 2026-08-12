@@ -6,6 +6,22 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-12
+
+### Added
+
+- 公开账号懒人入口：对用户明确指定的公开账号做有界盘点、分层取样和深析。
+- 账号资料包模式：盘点用户提供的导出、文件或结构化合集，并保留 `Nxx → Sxxx` 证据映射。
+- 简体中文、繁体中文、英文、日文和韩文的独立 README；核心执行规则仍仅维护一份 `SKILL.md`。
+- 公开账号成功、登录阻断、目标歧义、整号资料包、不安全压缩包和多语输出的合成评测案例。
+
+### Changed
+
+- 输入流程改为 `QUICK_SET`、`PUBLIC_SAMPLE` 和 `ACCOUNT_PACKAGE` 三种可审计模式自动分流。
+- 输出协议增加覆盖声明、盘点来源 `Sxxx`、可选聚合证据 `Axx`、停止原因和未覆盖项。
+- 报告正文和置信度标签跟随用户语言，模式代码与证据 ID 保持稳定。
+- 对外部访问、登录态、Cookie、访问控制、路径越界和压缩包输入的边界更严格。
+
 ## [0.1.0] - 2026-08-12
 
 ### Added
@@ -17,5 +33,6 @@
 - 输入安全、隐私、原创与诚实边界。
 - 合成示例、参考文档、基础评测与 GitHub 社区文件。
 
-[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.2.0
 [0.1.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.1.0

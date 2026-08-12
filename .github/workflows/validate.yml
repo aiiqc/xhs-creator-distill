@@ -10,9 +10,32 @@ permissions:
 jobs:
   repository:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Parse YAML with a safe loader
+        shell: ruby {0}
+        run: |
+          require "yaml"
+
+          yaml_files = Dir["agents/**/*.{yaml,yml}", ".github/**/*.{yaml,yml}"].sort
+          yaml_files.each do |path|
+            YAML.safe_load(File.read(path, encoding: "UTF-8"), permitted_classes: [], aliases: false)
+            puts "PASS YAML #{path}"
+          end
+
+          skill_text = File.read("SKILL.md", encoding: "UTF-8")
+          match = skill_text.match(/\A---\n(.*?)\n---/m)
+          abort "SKILL.md frontmatter is missing or malformed" unless match
+          frontmatter = YAML.safe_load(match[1], permitted_classes: [], aliases: false)
+          abort "SKILL.md frontmatter must be a mapping" unless frontmatter.is_a?(Hash)
+          abort "SKILL.md name must be a string" unless frontmatter["name"].is_a?(String)
+          abort "SKILL.md description must be a string" unless frontmatter["description"].is_a?(String)
+          puts "PASS YAML SKILL.md frontmatter"
 
       - name: Validate repository
         run: python3 scripts/validate_repo.py

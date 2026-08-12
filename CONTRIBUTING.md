@@ -51,6 +51,8 @@ fix: reject ungrounded creator claims
 - 不把某一宿主的行为推广成所有宿主的兼容结论。
 - 新规则应尽量短且可执行；详细资料放入合适的 `references/` 文件，避免与 `SKILL.md` 重复。
 - 关键结论应能回引输入编号，并区分观察、推断与证据不足。
+- `README.md` 是项目说明的规范源。修改安装命令、模式名、安全边界或当前版本时，必须同步 `README_ZH-TW.md`、`README_EN.md`、`README_JA.md` 和 `README_KO.md`。
+- 公开账号案例不得使用真实链接；合成测试仅使用 `example.invalid` 保留域名，且不在评测时访问网络。
 
 ## Pull Request 检查清单
 
@@ -58,6 +60,7 @@ fix: reject ungrounded creator claims
 - [ ] 核心行为变更已新增或更新评测；不适用时已说明原因。
 - [ ] 示例与测试数据均为合成内容，不含 PII 或第三方原文。
 - [ ] 相对链接和 Markdown 结构已检查。
+- [ ] 多语 README 的安装命令、三种模式、安全边界和版本号已同步。
 - [ ] 未削弱安全、隐私、原创或证据边界。
 - [ ] CHANGELOG 已在需要时更新。
 
