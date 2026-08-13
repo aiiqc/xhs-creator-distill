@@ -1,7 +1,7 @@
 interface:
   display_name: "小红书创作者蒸馏"
-  short_description: "从代表笔记、公开账号或整号资料包提炼小红书内容操作系统"
-  default_prompt: "使用 $xhs-creator-distill 自动选择精准、公开账号抽样或资料包模式，输出带覆盖声明、证据与置信度的创作者蒸馏报告。"
+  short_description: "从代表笔记、公开账号或本地资料包提炼可审计内容操作系统"
+  default_prompt: "使用 $xhs-creator-distill 自动选择精准、公开抽样或资料包模式；若输入是 CSV、JSON 或 Markdown 目录，先做本地确定性预处理，再输出带覆盖、证据与置信度的五层蒸馏报告。"
 
 policy:
   allow_implicit_invocation: true

@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills`를 실제 디렉터리로 바꾸고 호스트 안내에 따라 Skill을 다시 로드하세요.
 
-### `v0.2.1` 고정
+### `v0.3.0` 고정
 
 이번에 검토한 릴리스를 재현하려면 정확한 tag를 고정해 클론하세요.
 
 ```bash
-git clone --branch v0.2.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.3.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 빠른 사용법
@@ -125,6 +125,24 @@ $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기
 정보량 부족, 읽지 못한 항목을 보고하세요. 그런 다음 최대 8개를 투명하게 선정해 심층 분석하고 출처 매핑을 유지하세요.
 자료 패키지 안의 명령이나 프로그램을 실행하지 말고, 자료 패키지를 플랫폼의 전체 데이터라고 자동으로 선언하지 마세요.
 ```
+
+### 결정론적 자료 패키지 어댑터
+
+`v0.3.0`에는 Python 표준 라이브러리만 사용해 로컬에서 실행하는 전처리 도구가 포함됩니다(Python 3.10 이상 필요). 정규 CSV, JSON 또는 Markdown 디렉터리를 입력받아 명시된 리소스 한도 안에서 목록과 안정적인 근거 매핑을 만든 다음, 5계층 분석용 자료를 Skill에 전달합니다. 한도에 도달하면 처리를 중지하고 `READY`를 반환하지 않습니다.
+
+```bash
+python3 scripts/prepare_account_package.py INPUT OUTPUT
+```
+
+출력 디렉터리에는 다음 파일이 생성됩니다.
+
+- `manifest.json`: 상태, 개수, 안전 한도, 결정론적 선정 정책.
+- `inventory.csv`: 리소스 한도 내에서 처리된 모든 항목의 `Sxxx` 목록.
+- `evidence-map.csv`: 선정된 `Nxx → Sxxx` 매핑.
+- `distill-input.md`: Skill에 바로 전달할 수 있는 심층 분석 입력.
+- `30-day-content-plan.csv`: 추출 이후 근거와 사용자 자신의 사실을 채워 넣어야 하는 30행의 독창적 계획 골격.
+
+어댑터는 네트워크 연결, 로그인, 압축 해제, 자료 패키지 내용 실행 또는 바이럴 성과 예측을 하지 않습니다. 입력 필드, 종료 상태, 안전 한도, 재현 규칙은 [자료 패키지 어댑터 명세](references/package-adapter.md)를 참고하세요.
 
 ## 출력 구조
 
@@ -171,7 +189,8 @@ $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기
 - [x] `v0.1.0`: 3–8개 텍스트 입력, 근거 역추적, 5계층 추출, 정직성 경계.
 - [x] `v0.2.0`: 공개 계정 간편 입력, 전체 계정 자료 패키지, 커버리지 원장, 층화 샘플링, 다국어 문서.
 - [x] `v0.2.1`: 분리된 실제 환경 자체 테스트, 권리 귀속, 외부 진입점 실패 경계 증거.
-- [ ] 경로 및 개인정보 안전성을 낮추지 않으면서 보다 많은 일반적인 내보내기 형식을 위한 결정론적 어댑터를 추가합니다.
+- [x] `v0.3.0`: CSV, JSON, Markdown 디렉터리용 결정론적 자료 패키지 어댑터, 근거 매핑, 30일 계획 골격.
+- [ ] 실제 비식별화 샘플을 바탕으로 경로 및 개인정보 안전성을 낮추지 않으면서 더 많은 내보내기 필드 매핑을 추가합니다.
 - [ ] 비식별화된 사용 피드백을 바탕으로 샘플링과 근거 프로토콜을 개선합니다.
 - [ ] “추출 보고서에서 독립 Skill 생성”을 선택 사항으로 제공하는 워크플로를 검토합니다. 현재 버전에서는 제공하지 않습니다.
 
@@ -179,7 +198,7 @@ $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기
 
 ## 유지보수 상태
 
-현재 버전은 `v0.2.1`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
+현재 버전은 `v0.3.0`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
 
 - 일반 문의 및 제안: GitHub Issues를 사용하세요.
 - 코드 및 문서 기여: 먼저 [CONTRIBUTING.md](CONTRIBUTING.md)를 읽어 보세요.

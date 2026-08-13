@@ -6,6 +6,21 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-13
+
+### Added
+
+- 仅依赖 Python 标准库的确定性 `ACCOUNT_PACKAGE` 适配器，支持规范 CSV、JSON 与 Markdown 目录。
+- `manifest.json`、`inventory.csv`、`evidence-map.csv`、`distill-input.md` 和 `30-day-content-plan.csv` 五类可审计输出。
+- 适配器正反向回归测试，覆盖三种输入、重复内容、样本不足、符号链接、输出覆盖、跨文件证据映射和字节级可重跑性。
+- 资料包适配器规范与合成行为评测案例。
+
+### Changed
+
+- `ACCOUNT_PACKAGE` 优先使用确定性工具完成盘点、去重和选样，再进入模型驱动的五层蒸馏。
+- 30 天计划输出明确为 `DRAFT_REQUIRES_DISTILLATION` 骨架；不预填无证据选题，不承诺爆款、流量或收益。
+- 五语 README 同步 `v0.3.0` 使用方法、固定版本安装和安全边界。
+
 ## [0.2.1] - 2026-08-12
 
 ### Added
@@ -47,7 +62,8 @@
 - 输入安全、隐私、原创与诚实边界。
 - 合成示例、参考文档、基础评测与 GitHub 社区文件。
 
-[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.3.0
 [0.2.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.2.1
 [0.2.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.2.0
 [0.1.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.1.0

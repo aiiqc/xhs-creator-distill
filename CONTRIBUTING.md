@@ -13,7 +13,8 @@
 1. Fork 仓库并从最新默认分支创建短期分支。
 2. 只修改当前问题需要的内容，避免顺手重构或全局格式化。
 3. 检查 Markdown 相对链接、标题结构、示例一致性和敏感信息。
-4. 提交 Pull Request，并如实列出已运行和未运行的验证。
+4. 修改资料包适配器时，运行 `python3 scripts/test_prepare_account_package.py`，并确认输出不包含绝对路径、时间戳或公式注入载荷。
+5. 提交 Pull Request，并如实列出已运行和未运行的验证。
 
 Commit message 建议使用简洁英文，例如：
 
@@ -63,6 +64,7 @@ fix: reject ungrounded creator claims
 - `README.md` 是项目说明的规范源。修改安装命令、模式名、安全边界或当前版本时，必须同步 `README_ZH-TW.md`、`README_EN.md`、`README_JA.md` 和 `README_KO.md`。
 - `evals/cases/` 的公开账号案例不得使用真实链接；合成测试仅使用 `example.invalid` 保留域名，且不在评测时访问网络。
 - CI 不得联网重跑 `validation/real-world/`；外部来源漂移必须作为历史记录限制说明。
+- 适配器测试必须使用合成资料，不能提交真实账号导出；输出目录必须位于临时位置且不得进入仓库。
 
 ## Pull Request 检查清单
 
@@ -70,7 +72,7 @@ fix: reject ungrounded creator claims
 - [ ] 核心行为变更已新增或更新评测；不适用时已说明原因。
 - [ ] 示例与合成案例不含 PII 或第三方原文；真实世界结果已完成授权、留存和证据层级审查。
 - [ ] 相对链接和 Markdown 结构已检查。
-- [ ] 多语 README 的安装命令、三种模式、安全边界和版本号已同步。
+- [ ] 多语 README 的安装命令、三种模式、适配器命令、安全边界和版本号已同步。
 - [ ] 未削弱安全、隐私、原创或证据边界。
 - [ ] CHANGELOG 已在需要时更新。
 

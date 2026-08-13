@@ -10,7 +10,7 @@ from urllib.parse import unquote
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_VERSION = "v0.2.1"
+RELEASE_VERSION = "v0.3.0"
 
 REAL_WORLD_ALLOWED_URLS = {
     "https://theakram.com/compose-on-the-web",
@@ -36,6 +36,7 @@ REQUIRED_FILES = (
     "SECURITY.md",
     "agents/openai.yaml",
     "references/account-modes.md",
+    "references/package-adapter.md",
     "references/distill-framework.md",
     "references/adaptation-guide.md",
     "references/output-contract.md",
@@ -53,6 +54,7 @@ REQUIRED_FILES = (
     "evals/cases/public-account-blocked.md",
     "evals/cases/public-account-ambiguous.md",
     "evals/cases/whole-account-package.md",
+    "evals/cases/deterministic-package-adapter.md",
     "evals/cases/unsafe-archive-package.md",
     "evals/cases/multilingual-output.md",
     "validation/real-world/README.md",
@@ -62,6 +64,8 @@ REQUIRED_FILES = (
     "validation/real-world/cc-by-sa/akram-quick-set-v0.2.1.md",
     "scripts/validate_repo.py",
     "scripts/test_validate_repo.py",
+    "scripts/prepare_account_package.py",
+    "scripts/test_prepare_account_package.py",
     ".github/workflows/validate.yml",
 )
 
@@ -371,6 +375,9 @@ def check_readme_sync(errors: list[str]) -> None:
         "ACCOUNT_PACKAGE",
         RELEASE_VERSION,
         "validation/real-world/",
+        "python3 scripts/prepare_account_package.py INPUT OUTPUT",
+        "manifest.json",
+        "30-day-content-plan.csv",
         "60",
     )
     safety_fragments = {
@@ -435,6 +442,46 @@ def check_readme_sync(errors: list[str]) -> None:
                     f"{relative} structure differs from README.md "
                     f"(H2, H3, fences, table rows: {shape} != {canonical_shape})",
                 )
+
+
+def check_package_adapter_contract(errors: list[str]) -> None:
+    required_fragments = {
+        "SKILL.md": (
+            "references/package-adapter.md",
+            "python3 scripts/prepare_account_package.py INPUT OUTPUT",
+            "30-day-content-plan.csv",
+        ),
+        "references/package-adapter.md": (
+            "READY",
+            "HOLD",
+            "DRAFT_REQUIRES_DISTILLATION",
+            "manifest.json",
+            "inventory.csv",
+            "evidence-map.csv",
+            "distill-input.md",
+            "30-day-content-plan.csv",
+            "字节级一致",
+        ),
+        "evals/cases/deterministic-package-adapter.md": (
+            "READY",
+            "HOLD",
+            "DRAFT_REQUIRES_DISTILLATION",
+            "字节级一致",
+        ),
+        ".github/workflows/validate.yml": (
+            "python3 scripts/test_prepare_account_package.py",
+        ),
+    }
+    for relative, fragments in required_fragments.items():
+        path = ROOT / relative
+        if not path.is_file():
+            continue
+        content = read_text(path, errors)
+        if content is None:
+            continue
+        for fragment in fragments:
+            if fragment not in content:
+                add_error(errors, f"{relative} is missing package-adapter contract: {fragment}")
 
 
 def check_synthetic_examples(errors: list[str]) -> None:
@@ -581,6 +628,7 @@ def main() -> int:
     check_unfinished_markers(errors)
     check_markdown_links(errors)
     check_readme_sync(errors)
+    check_package_adapter_contract(errors)
     check_synthetic_examples(errors)
     check_real_world_validation(errors)
 
