@@ -1,0 +1,9 @@
+evidence_id,source_id,selection_reason,source_path,original_id,content_sha256,title
+N01,S001,pinned,row:2,P001,ba1f18f9e89db02fd90fe0313016d6cb19ec8e67ecead2529ffbeb75ec36d1a0,三步整理桌面工作流
+N02,S009,recent,row:10,P009,9cc1e2ec8a44124fa74bb79c56641d027c3d051d331192c8c0fefcd5ea84dc99,如何记录一轮小实验
+N03,S008,recent,row:9,P008,300ed7f3aacb3ce646b956e55fdf07367cdcae4e5d6b43c9868f665825982e52,周末低成本整理清单
+N04,S004,high_engagement_observed,row:5,'-P004,3cff668e98ee227ec3f87d176be389aa6e9be0025a1a926f2e2eea0c356fda1d,把复杂任务拆成四个检查点
+N05,S003,high_engagement_observed,row:4,'+P003,62cbaa155d5ea3feb1f8025559eda29799953ddf7248e0d52c2a55698a1b2446,新手常见的五个误区
+N06,S002,content_type_diversity,row:3,P002,8186ffc6f8098f7e4b2d56cc3d1f118aebf5d1a4676aac847fb300d1264b3926,复盘一周内容实验
+N07,S007,content_type_diversity,row:8,P007,cbf9893b6a08a04d51950239ac85f55beb3498433042ed39df1c130758e39491,'=1+1 合成公式前缀标题
+N08,S005,source_order_fallback,row:6,'  @P005,444676bd948d6d0fec54dd47d588875982f337ed4cf98a3b6b8fb002ebc701d1,读者提问集中回复

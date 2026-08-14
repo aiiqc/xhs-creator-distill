@@ -12,7 +12,7 @@
 
 [简体中文](README.md) · [繁體中文](README_ZH-TW.md) · [English](README_EN.md) · [日本語](README_JA.md) · [한국어](README_KO.md)
 
-[查看 Skill](SKILL.md) · [查看示例](examples/sample-distill-report.md) · [输出协议](references/output-contract.md) · [变更记录](CHANGELOG.md)
+[查看 Skill](SKILL.md) · [查看示例](examples/sample-distill-report.md) · [60 秒合成 Demo](examples/account-package-demo/README.md) · [输出协议](references/output-contract.md) · [变更记录](CHANGELOG.md)
 
 </div>
 
@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 将 `/path/to/your/skills` 替换为真实目录，再按宿主说明重新加载 Skill。
 
-### 固定 `v0.3.0` 安装
+### 固定 `v0.3.1` 安装
 
 需要重现本次已审查发布版时，请锁定 tag：
 
 ```bash
-git clone --branch v0.3.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 快速使用
@@ -144,6 +144,18 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 适配器不联网、不登录、不解压、不执行包内内容，也不生成“爆款”判断。输入字段、退出状态、安全上限和可重跑规则见[资料包适配器规范](references/package-adapter.md)。
 
+### 60 秒合成 Demo
+
+[60 秒合成 Demo](examples/account-package-demo/README.md) 完全使用虚构 CSV，无需登录，也不包含私人数据。从仓库根目录运行固定离线回归：
+
+```bash
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+```
+
+测试进程以退出码 `0` 表示通过，适配器 manifest 状态为 `READY`；它会将新生成的 `manifest.json`、`inventory.csv`、`evidence-map.csv`、`distill-input.md` 和 `30-day-content-plan.csv` 与仓库中的五项黄金输出逐字节比较。
+
+这只验证本地适配器的可重现性，不验证安装或宿主发现，也不是独立外部采用证据或小红书正向 E2E。
+
 ## 输出结构
 
 完整报告通常包含：
@@ -190,6 +202,7 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 - [x] `v0.2.0`：公开账号懒人入口、整号资料包、覆盖账本、分层取样和多语言说明。
 - [x] `v0.2.1`：发布隔离的真实世界自测、版权归属和外部入口失败边界证据。
 - [x] `v0.3.0`：CSV、JSON 与 Markdown 目录的确定性资料包适配器、证据映射和30天计划骨架。
+- [x] `v0.3.1`：60 秒合成 CSV Demo、五项黄金输出、公式/提示注入回归和 macOS/Windows 字节一致性验证。
 - [ ] 根据真实、去标识化样本增加更多导出字段映射，不降低路径和隐私安全。
 - [ ] 根据去标识化使用反馈优化取样和证据协议。
 - [ ] 评估“从蒸馏报告生成独立 Skill”的可选流程；当前版本不提供。
@@ -198,7 +211,7 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 ## 维护状态
 
-当前版本为 `v0.3.0`。项目按 [Semantic Versioning](https://semver.org/) 记录版本，并在 [CHANGELOG](CHANGELOG.md) 中说明变更。
+当前版本为 `v0.3.1`。项目按 [Semantic Versioning](https://semver.org/) 记录版本，并在 [CHANGELOG](CHANGELOG.md) 中说明变更。
 
 - 一般问题与建议：使用 GitHub Issues。
 - 代码与文档贡献：先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。

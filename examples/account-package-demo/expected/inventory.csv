@@ -1,0 +1,12 @@
+source_id,source_path,original_id,creator,title,published_at,content_type,pinned,engagement,parse_status,complete_text,is_duplicate,duplicate_of,content_sha256,notes
+S001,row:2,P001,虚构示例创作者,三步整理桌面工作流,2026-08-01,教程,true,420,PARSED,true,false,,ba1f18f9e89db02fd90fe0313016d6cb19ec8e67ecead2529ffbeb75ec36d1a0,complete_independent_record
+S002,row:3,P002,虚构示例创作者,复盘一周内容实验,2026-08-02,复盘,false,310,PARSED,true,false,,8186ffc6f8098f7e4b2d56cc3d1f118aebf5d1a4676aac847fb300d1264b3926,complete_independent_record
+S003,row:4,'+P003,虚构示例创作者,新手常见的五个误区,2026-08-03,清单,false,870,PARSED,true,false,,62cbaa155d5ea3feb1f8025559eda29799953ddf7248e0d52c2a55698a1b2446,complete_independent_record
+S004,row:5,'-P004,虚构示例创作者,把复杂任务拆成四个检查点,2026-08-04,教程,false,980,PARSED,true,false,,3cff668e98ee227ec3f87d176be389aa6e9be0025a1a926f2e2eea0c356fda1d,complete_independent_record
+S005,row:6,'  @P005,虚构示例创作者,读者提问集中回复,2026-08-05,复盘,false,260,PARSED,true,false,,444676bd948d6d0fec54dd47d588875982f337ed4cf98a3b6b8fb002ebc701d1,complete_independent_record
+S006,row:7,P006,虚构示例创作者,失败案例计划排得太满,2026-08-06,复盘,false,190,PARSED,true,false,,935a64220507901c1330a46795f4c4bdb420a940ac4ae19159babdd4cffbdc83,complete_independent_record
+S007,row:8,P007,虚构示例创作者,'=1+1 合成公式前缀标题,2026-08-07,安全说明,false,150,PARSED,true,false,,cbf9893b6a08a04d51950239ac85f55beb3498433042ed39df1c130758e39491,complete_independent_record
+S008,row:9,P008,虚构示例创作者,周末低成本整理清单,2026-08-08,清单,false,230,PARSED,true,false,,300ed7f3aacb3ce646b956e55fdf07367cdcae4e5d6b43c9868f665825982e52,complete_independent_record
+S009,row:10,P009,虚构示例创作者,如何记录一轮小实验,2026-08-09,教程,false,280,PARSED,true,false,,9cc1e2ec8a44124fa74bb79c56641d027c3d051d331192c8c0fefcd5ea84dc99,complete_independent_record
+S010,row:11,P010,虚构示例创作者,重复收录的复盘条目,2026-08-10,复盘,false,305,PARSED,true,true,S002,8186ffc6f8098f7e4b2d56cc3d1f118aebf5d1a4676aac847fb300d1264b3926,exact_normalized_content_duplicate
+S011,row:12,P011,虚构示例创作者,低信息占位条目,2026-08-11,占位,false,20,PARSED,false,false,,79db8f44c5f6dca929239705bff7f7770308123618776d0a89f6c178c8ffd066,content_shorter_than_40_characters

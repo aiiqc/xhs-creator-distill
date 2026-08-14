@@ -37,6 +37,11 @@ jobs:
           abort "SKILL.md description must be a string" unless frontmatter["description"].is_a?(String)
           puts "PASS YAML SKILL.md frontmatter"
 
+      - name: Set up minimum supported Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.10"
+
       - name: Validate repository
         run: python3 scripts/validate_repo.py
 
@@ -45,3 +50,29 @@ jobs:
 
       - name: Test deterministic package adapter
         run: python3 scripts/test_prepare_account_package.py
+
+  demo-golden:
+    name: Demo golden outputs (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Compare generated demo with golden outputs
+        run: >-
+          python scripts/test_prepare_account_package.py
+          AdapterTestCase.test_repository_demo_matches_golden_outputs -v

@@ -12,7 +12,7 @@
 
 [简体中文](README.md) · [繁體中文](README_ZH-TW.md) · [English](README_EN.md) · [日本語](README_JA.md) · [한국어](README_KO.md)
 
-[スキルを見る](SKILL.md) · [サンプルを見る](examples/sample-distill-report.md) · [出力プロトコル](references/output-contract.md) · [変更履歴](CHANGELOG.md)
+[スキルを見る](SKILL.md) · [サンプルを見る](examples/sample-distill-report.md) · [60秒の合成デモ](examples/account-package-demo/README.md) · [出力プロトコル](references/output-contract.md) · [変更履歴](CHANGELOG.md)
 
 </div>
 
@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills` を実際のディレクトリに置き換え、ホストの説明に従ってスキルを再読み込みしてください。
 
-### `v0.3.0` に固定
+### `v0.3.1` に固定
 
 今回レビュー済みのリリースを再現するには、tag を固定してクローンします。
 
 ```bash
-git clone --branch v0.3.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## クイックスタート
@@ -144,6 +144,18 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 このアダプターは、ネットワーク接続、ログイン、アーカイブ展開、資料内コンテンツの実行、バイラル成果の予測を行いません。入力フィールド、終了状態、安全上限、再現ルールは[資料パッケージアダプター仕様](references/package-adapter.md)を参照してください。
 
+### 60秒の合成デモ
+
+[60秒の合成デモ](examples/account-package-demo/README.md) は完全に架空の CSV だけを使い、ログインは不要で、個人データも含みません。リポジトリのルートから、次の固定オフライン回帰テストを実行します。
+
+```bash
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+```
+
+終了コード `0` が成功を示し、アダプターの manifest 状態は `READY` です。テストは新たに生成した `manifest.json`、`inventory.csv`、`evidence-map.csv`、`distill-input.md`、`30-day-content-plan.csv` を、リポジトリ内の5つのゴールデン出力とバイト単位で比較します。
+
+これはローカルアダプターの再現性だけを検証します。インストールやホストによる検出を検証するものではなく、独立した外部採用の証拠や、小紅書上での成功を示す E2E でもありません。
+
 ## 出力構成
 
 完全なレポートには通常、次の内容が含まれます。
@@ -190,6 +202,7 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 - [x] `v0.2.0`：公開アカウントの手軽な入口、アカウント全体の資料パッケージ、カバレッジ台帳、階層的サンプリング、多言語ドキュメント。
 - [x] `v0.2.1`：分離された実世界セルフテスト、権利帰属、外部入口の失敗境界に関する証拠。
 - [x] `v0.3.0`：CSV、JSON、Markdown ディレクトリ向けの決定論的資料パッケージアダプター、根拠マッピング、30日計画骨格。
+- [x] `v0.3.1`：60秒の合成 CSV デモ、5つのゴールデン出力、数式/プロンプトインジェクション回帰、macOS/Windows 間のバイト一致性検証。
 - [ ] 実在する匿名化済みサンプルに基づいて、パスとプライバシーの安全性を低下させず、より多くのエクスポートフィールド対応を追加する。
 - [ ] 匿名化された利用者からのフィードバックに基づき、サンプリングと根拠のプロトコルを改善する。
 - [ ] 「抽出レポートから独立したスキルを生成する」オプションのワークフローを評価する。現バージョンでは提供しない。
@@ -198,7 +211,7 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 ## メンテナンス状況
 
-現在のバージョンは `v0.3.0` です。本プロジェクトは [Semantic Versioning](https://semver.org/) に従ってバージョンを管理し、変更内容を [CHANGELOG](CHANGELOG.md) に記載します。
+現在のバージョンは `v0.3.1` です。本プロジェクトは [Semantic Versioning](https://semver.org/) に従ってバージョンを管理し、変更内容を [CHANGELOG](CHANGELOG.md) に記載します。
 
 - 一般的な問題と提案：GitHub Issuesを使用してください。
 - コードとドキュメントの貢献：まず [CONTRIBUTING.md](CONTRIBUTING.md) をお読みください。

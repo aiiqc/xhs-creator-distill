@@ -1,0 +1,80 @@
+{
+  "canonical_fields": [
+    "id",
+    "creator",
+    "title",
+    "content",
+    "published_at",
+    "content_type",
+    "pinned",
+    "engagement"
+  ],
+  "counts": {
+    "complete_text": 10,
+    "decoded_text_bytes": 2458,
+    "deep_analysis_candidates": 8,
+    "discovered": 11,
+    "duplicate": 1,
+    "independent_usable": 9,
+    "inventoried": 11,
+    "low_information": 1,
+    "parsed": 11,
+    "skipped": 0,
+    "unprocessed": 0
+  },
+  "evidence_mapping": [
+    {
+      "evidence_id": "N01",
+      "source_id": "S001"
+    },
+    {
+      "evidence_id": "N02",
+      "source_id": "S009"
+    },
+    {
+      "evidence_id": "N03",
+      "source_id": "S008"
+    },
+    {
+      "evidence_id": "N04",
+      "source_id": "S004"
+    },
+    {
+      "evidence_id": "N05",
+      "source_id": "S003"
+    },
+    {
+      "evidence_id": "N06",
+      "source_id": "S002"
+    },
+    {
+      "evidence_id": "N07",
+      "source_id": "S007"
+    },
+    {
+      "evidence_id": "N08",
+      "source_id": "S005"
+    }
+  ],
+  "hold_reasons": [],
+  "input_format": "csv",
+  "input_mode": "ACCOUNT_PACKAGE",
+  "limits": {
+    "max_directory_entries": 1000,
+    "max_records": 500,
+    "max_text_bytes": 52428800,
+    "max_text_lines": 200000,
+    "min_content_characters": 40
+  },
+  "material_scope": "user_provided_local_package_only",
+  "output_files": [
+    "manifest.json",
+    "inventory.csv",
+    "evidence-map.csv",
+    "distill-input.md",
+    "30-day-content-plan.csv"
+  ],
+  "schema_version": "1.0",
+  "selection_policy": "pinned-recent-engagement-type-source-order-v1",
+  "status": "READY"
+}

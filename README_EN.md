@@ -12,7 +12,7 @@ Distill an evidence-backed, transferable content operating system for a Xiaohong
 
 [简体中文](README.md) · [繁體中文](README_ZH-TW.md) · **English** · [日本語](README_JA.md) · [한국어](README_KO.md)
 
-[View the Skill](SKILL.md) · [View the example](examples/sample-distill-report.md) · [Output contract](references/output-contract.md) · [Changelog](CHANGELOG.md)
+[View the Skill](SKILL.md) · [View the example](examples/sample-distill-report.md) · [60-second synthetic demo](examples/account-package-demo/README.md) · [Output contract](references/output-contract.md) · [Changelog](CHANGELOG.md)
 
 </div>
 
@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 Replace `/path/to/your/skills` with the actual directory, then reload the Skill according to the host’s instructions.
 
-### Pin `v0.3.0`
+### Pin `v0.3.1`
 
 To reproduce this reviewed release, clone the exact tag:
 
 ```bash
-git clone --branch v0.3.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## Quick start
@@ -148,6 +148,18 @@ The output directory contains:
 
 The adapter does not use the network, log in, extract archives, execute package content, or predict viral performance. See the [package adapter specification](references/package-adapter.md) for input fields, exit states, safety limits, and reproducibility rules.
 
+### 60-second synthetic demo
+
+The [60-second synthetic demo](examples/account-package-demo/README.md) uses only fictional CSV data, requires no login, and contains no private data. Run the fixed offline regression from the repository root:
+
+```bash
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+```
+
+Exit code `0` indicates a pass, and the adapter manifest status is `READY`. The test compares the newly generated `manifest.json`, `inventory.csv`, `evidence-map.csv`, `distill-input.md`, and `30-day-content-plan.csv` byte for byte with the repository's five golden outputs.
+
+This verifies local adapter reproducibility only. It does not validate installation or host discovery, and it is neither independent external adoption evidence nor a positive Xiaohongshu E2E.
+
 ## Output structure
 
 A complete report usually includes:
@@ -194,6 +206,7 @@ The [MIT License](LICENSE) covers only content that this repository’s authors 
 - [x] `v0.2.0`: quick public-account entry, full-account packages, coverage ledgers, stratified sampling, and multilingual documentation.
 - [x] `v0.2.1`: isolated real-world self-tests, rights attribution, and evidence for external-entry failure boundaries.
 - [x] `v0.3.0`: deterministic CSV, JSON, and Markdown-directory package adapter, evidence mappings, and a 30-day planning skeleton.
+- [x] `v0.3.1`: a 60-second synthetic CSV demo, five golden outputs, formula/prompt-injection regressions, and macOS/Windows byte-consistency validation.
 - [ ] Add more export-field mappings from real, de-identified samples without weakening path or privacy safety.
 - [ ] Improve the sampling and evidence protocols based on de-identified usage feedback.
 - [ ] Evaluate an optional workflow for generating an independent Skill from a distillation report; the current version does not provide this.
@@ -202,7 +215,7 @@ The roadmap is not a version commitment. Priorities may change based on validati
 
 ## Maintenance status
 
-The current version is `v0.3.0`. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
+The current version is `v0.3.1`. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
 
 - General questions and suggestions: use GitHub Issues.
 - Code and documentation contributions: read [CONTRIBUTING.md](CONTRIBUTING.md) first.

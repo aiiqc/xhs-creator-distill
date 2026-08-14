@@ -94,6 +94,107 @@ def main() -> int:
         "symlink is not allowed in real-world validation",
         add_symlink,
     )
+
+    def add_extra_demo_artifact(repository: Path) -> None:
+        path = repository / "examples/account-package-demo/expected/extra.txt"
+        path.write_text("unexpected\n", encoding="utf-8")
+
+    assert_fail(
+        "extra synthetic demo artifact",
+        "must contain exactly the five adapter artifacts",
+        add_extra_demo_artifact,
+    )
+
+    def remove_formula_escape(repository: Path) -> None:
+        path = repository / "examples/account-package-demo/expected/inventory.csv"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "'=1+1 合成公式前缀标题",
+                "=1+1 合成公式前缀标题",
+            ),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "missing spreadsheet escape in synthetic demo",
+        "does not prove spreadsheet prefix escaping",
+        remove_formula_escape,
+    )
+
+    def add_demo_email(repository: Path) -> None:
+        path = repository / "examples/account-package-demo/input/posts.csv"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("虚构示例创作者", "demo-person@example.com", 1),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "email-shaped value in synthetic demo",
+        "possible email address in synthetic data",
+        add_demo_email,
+    )
+
+    def add_extra_demo_input(repository: Path) -> None:
+        path = repository / "examples/account-package-demo/input/real-export.json"
+        path.write_text(
+            '{"email":"real-person@example.com","url":"https://unapproved.example/path"}\n',
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "extra file in synthetic demo input",
+        "input directory must contain exactly posts.csv",
+        add_extra_demo_input,
+    )
+
+    def add_extra_demo_root_artifact(repository: Path) -> None:
+        path = repository / "examples/account-package-demo/raw-export.json"
+        path.write_text('{"unexpected":true}\n', encoding="utf-8", newline="\n")
+
+    assert_fail(
+        "extra file in synthetic demo root",
+        "root must contain exactly README.md, input, and expected",
+        add_extra_demo_root_artifact,
+    )
+
+    def add_demo_credential_shape(repository: Path) -> None:
+        path = repository / "examples/account-package-demo/input/posts.csv"
+        original = path.read_text(encoding="utf-8")
+        mutated = original.replace(
+            "这是一篇完全虚构的教程正文",
+            "这是一篇完全虚构的教程正文 FAKE_SECRET_ghp_0123456789abcdefghijklmn",
+            1,
+        )
+        if mutated == original:
+            raise AssertionError("credential fixture mutation target is missing")
+        path.write_text(
+            mutated,
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "credential-shaped value in synthetic demo",
+        "credential-shaped content in synthetic demo",
+        add_demo_credential_shape,
+    )
+
+    def add_unsafe_evidence_formula(repository: Path) -> None:
+        path = repository / "examples/account-package-demo/expected/evidence-map.csv"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("'+P003", "+P003"),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "unsafe spreadsheet prefix in synthetic demo output",
+        "unsafe spreadsheet prefix in synthetic demo output",
+        add_unsafe_evidence_formula,
+    )
     return 0
 
 

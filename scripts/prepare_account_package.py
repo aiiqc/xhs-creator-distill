@@ -802,6 +802,7 @@ def write_artifacts(output: Path, load_result: LoadResult) -> str:
         (stage / "manifest.json").write_text(
             json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
             encoding="utf-8",
+            newline="\n",
         )
         inventory_fields = (
             "source_id",

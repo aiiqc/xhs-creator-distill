@@ -6,6 +6,19 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-14
+
+### Added
+
+- 可在 60 秒内复现的合成 CSV fixture，以及 `manifest.json`、`inventory.csv`、`evidence-map.csv`、`distill-input.md` 和 `30-day-content-plan.csv` 五项黄金制品。
+- 固定 Demo 回归测试，将 `=`、`+`、`-`、`@` 公式前缀和多行 prompt injection 文字当作不可信数据，并对五项输出逐字节比较。
+- macOS 与 Windows GitHub Actions 矩阵，用于验证 Demo 黄金制品的跨平台一致性。
+
+### Changed
+
+- `manifest.json` 显式使用 LF 换行，Demo fixture 与黄金制品通过 `.gitattributes` 固定为 LF，以保持 macOS/Windows 字节级可重现。
+- 五语 README 同步 `v0.3.1` 固定版本安装、60 秒合成 Demo 和本地验证边界。
+
 ## [0.3.0] - 2026-08-13
 
 ### Added
@@ -62,7 +75,8 @@
 - 输入安全、隐私、原创与诚实边界。
 - 合成示例、参考文档、基础评测与 GitHub 社区文件。
 
-[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.3.1
 [0.3.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.3.0
 [0.2.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.2.1
 [0.2.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.2.0

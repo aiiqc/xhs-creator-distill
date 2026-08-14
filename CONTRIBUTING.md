@@ -64,7 +64,7 @@ fix: reject ungrounded creator claims
 - `README.md` 是项目说明的规范源。修改安装命令、模式名、安全边界或当前版本时，必须同步 `README_ZH-TW.md`、`README_EN.md`、`README_JA.md` 和 `README_KO.md`。
 - `evals/cases/` 的公开账号案例不得使用真实链接；合成测试仅使用 `example.invalid` 保留域名，且不在评测时访问网络。
 - CI 不得联网重跑 `validation/real-world/`；外部来源漂移必须作为历史记录限制说明。
-- 适配器测试必须使用合成资料，不能提交真实账号导出；输出目录必须位于临时位置且不得进入仓库。
+- 适配器测试必须使用合成资料，不能提交真实账号导出。临时运行输出不得进入仓库；唯一例外是 `examples/account-package-demo/expected/` 中由受审合成输入生成、并由逐字节回归锁定的五个黄金制品。
 
 ## Pull Request 检查清单
 
@@ -73,6 +73,7 @@ fix: reject ungrounded creator claims
 - [ ] 示例与合成案例不含 PII 或第三方原文；真实世界结果已完成授权、留存和证据层级审查。
 - [ ] 相对链接和 Markdown 结构已检查。
 - [ ] 多语 README 的安装命令、三种模式、适配器命令、安全边界和版本号已同步。
+- [ ] 修改 Demo 输入或适配器输出时，五个黄金制品已重新生成并通过逐字节回归。
 - [ ] 未削弱安全、隐私、原创或证据边界。
 - [ ] CHANGELOG 已在需要时更新。
 

@@ -12,7 +12,7 @@
 
 [简体中文](README.md) · [繁體中文](README_ZH-TW.md) · [English](README_EN.md) · [日本語](README_JA.md) · [한국어](README_KO.md)
 
-[Skill 보기](SKILL.md) · [예제 보기](examples/sample-distill-report.md) · [출력 프로토콜](references/output-contract.md) · [변경 기록](CHANGELOG.md)
+[Skill 보기](SKILL.md) · [예제 보기](examples/sample-distill-report.md) · [60초 합성 데모](examples/account-package-demo/README.md) · [출력 프로토콜](references/output-contract.md) · [변경 기록](CHANGELOG.md)
 
 </div>
 
@@ -77,12 +77,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills`를 실제 디렉터리로 바꾸고 호스트 안내에 따라 Skill을 다시 로드하세요.
 
-### `v0.3.0` 고정
+### `v0.3.1` 고정
 
 이번에 검토한 릴리스를 재현하려면 정확한 tag를 고정해 클론하세요.
 
 ```bash
-git clone --branch v0.3.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 빠른 사용법
@@ -144,6 +144,18 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 어댑터는 네트워크 연결, 로그인, 압축 해제, 자료 패키지 내용 실행 또는 바이럴 성과 예측을 하지 않습니다. 입력 필드, 종료 상태, 안전 한도, 재현 규칙은 [자료 패키지 어댑터 명세](references/package-adapter.md)를 참고하세요.
 
+### 60초 합성 데모
+
+[60초 합성 데모](examples/account-package-demo/README.md)는 완전히 가상으로 만든 CSV만 사용하며, 로그인이 필요 없고 개인 데이터를 포함하지 않습니다. 저장소 루트에서 다음 고정 오프라인 회귀 테스트를 실행하세요.
+
+```bash
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+```
+
+종료 코드 `0`은 통과를 의미하며, 어댑터 manifest 상태는 `READY`입니다. 테스트는 새로 생성한 `manifest.json`, `inventory.csv`, `evidence-map.csv`, `distill-input.md`, `30-day-content-plan.csv`를 저장소의 골든 출력 5개와 바이트 단위로 비교합니다.
+
+이 테스트는 로컬 어댑터의 재현성만 검증합니다. 설치나 호스트의 Skill 발견을 검증하지 않으며, 독립적인 외부 채택 근거나 샤오홍수에서 성공한 E2E도 아닙니다.
+
 ## 출력 구조
 
 전체 보고서에는 보통 다음 내용이 포함됩니다.
@@ -190,6 +202,7 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 - [x] `v0.2.0`: 공개 계정 간편 입력, 전체 계정 자료 패키지, 커버리지 원장, 층화 샘플링, 다국어 문서.
 - [x] `v0.2.1`: 분리된 실제 환경 자체 테스트, 권리 귀속, 외부 진입점 실패 경계 증거.
 - [x] `v0.3.0`: CSV, JSON, Markdown 디렉터리용 결정론적 자료 패키지 어댑터, 근거 매핑, 30일 계획 골격.
+- [x] `v0.3.1`: 60초 합성 CSV 데모, 골든 출력 5개, 수식/프롬프트 인젝션 회귀, macOS/Windows 바이트 일치 검증.
 - [ ] 실제 비식별화 샘플을 바탕으로 경로 및 개인정보 안전성을 낮추지 않으면서 더 많은 내보내기 필드 매핑을 추가합니다.
 - [ ] 비식별화된 사용 피드백을 바탕으로 샘플링과 근거 프로토콜을 개선합니다.
 - [ ] “추출 보고서에서 독립 Skill 생성”을 선택 사항으로 제공하는 워크플로를 검토합니다. 현재 버전에서는 제공하지 않습니다.
@@ -198,7 +211,7 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 ## 유지보수 상태
 
-현재 버전은 `v0.3.0`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
+현재 버전은 `v0.3.1`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
 
 - 일반 문의 및 제안: GitHub Issues를 사용하세요.
 - 코드 및 문서 기여: 먼저 [CONTRIBUTING.md](CONTRIBUTING.md)를 읽어 보세요.
