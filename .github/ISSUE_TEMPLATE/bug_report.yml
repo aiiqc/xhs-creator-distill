@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: 版本或 commit
-      placeholder: v0.3.1 或 commit SHA
+      placeholder: v0.4.0 或 commit SHA
     validations:
       required: true
   - type: input
@@ -19,6 +19,18 @@ body:
     attributes:
       label: 使用的宿主
       description: 请填写宿主名称和版本（如已知），不要粘贴账号或凭据。
+    validations:
+      required: true
+  - type: dropdown
+    id: input_mode
+    attributes:
+      label: 输入模式
+      description: 请选择出现问题时使用的模式。PUBLIC_SAMPLE 被登录墙或访问控制阻断可能是预期边界，无需勾选额外确认。
+      options:
+        - QUICK_SET（3–8 篇材料）
+        - PUBLIC_SAMPLE（公开可访问样本）
+        - ACCOUNT_PACKAGE（用户提供的导出或资料包）
+        - 不确定或不适用
     validations:
       required: true
   - type: textarea

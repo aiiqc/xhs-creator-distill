@@ -37,8 +37,8 @@
 | 모드 | 입력 | 기본 동작 | 적합한 사용자 |
 | --- | --- | --- | --- |
 | `QUICK_SET` | 대표 노트 3–8개 | 인터넷 연결 없이 모두 심층 분석 | 빠른 결과, 정밀함, 통제 가능한 개인정보 보호를 원하는 사용자 |
-| `PUBLIC_SAMPLE` | 공개 계정 URL 또는 고유 식별자 | 보이는 항목을 최대 60개까지 파악하고 층화 샘플링으로 최대 8개를 선정해 심층 분석 | 한 번의 명령으로 시작하고 싶은 간편함 중심의 사용자 |
-| `ACCOUNT_PACKAGE` | 계정 내보내기, 파일, 디렉터리 또는 구조화된 모음 | 먼저 전체 패키지를 파악한 뒤 3–8개를 선정해 심층 분석 | 패키지 단위의 포괄성과 재검증 가능한 결론이 필요한 사용자 |
+| `PUBLIC_SAMPLE` | 공개 계정 URL 또는 고유 식별자 | 보이는 항목을 최대 60개까지 파악하고 최대 8개를 심층 분석하며, 접근 제어로 차단될 수 있음 | 먼저 공개 읽기를 시도하려는 사용자 |
+| `ACCOUNT_PACKAGE` | 계정 내보내기, 파일, 디렉터리 또는 구조화된 모음 | 플랫폼 로그인 없이 전체 패키지를 파악한 뒤 3–8개를 심층 분석 | 성공률 높은 전체 계정 기본 경로, 패키지 단위 포괄성, 재검증 가능한 결론이 필요한 사용자 |
 
 ### “전체 계정”이라는 표현의 정직성 경계
 
@@ -46,6 +46,7 @@
 - 사용자가 내보내기 파일이나 자료 패키지를 제공한 경우에만 **현재 자료 패키지 범위 내의 전체 파악**을 수행할 수 있습니다.
 - 사용자가 완전한 내보내기 자료라고 설명하더라도, 보고서에는 “플랫폼의 실제 전체 데이터와 대조해 독립적으로 검증한 것은 아님”을 명시합니다.
 - 각 계정 보고서에는 발견 수, 파싱 수, 전체 텍스트 확보 수, 심층 분석 수, 중단 이유, 미포함 항목을 표시합니다.
+- `ACCOUNT_PACKAGE`는 플랫폼 로그인이 필요 없고 성공률을 더 통제하기 쉬운 전체 계정 기본 경로입니다. “전체”는 사용자가 제공한 현재 자료 패키지 범위만 뜻합니다.
 
 ## 무엇을 추출하는가
 
@@ -77,17 +78,20 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills`를 실제 디렉터리로 바꾸고 호스트 안내에 따라 Skill을 다시 로드하세요.
 
-### `v0.3.1` 고정
+### `v0.4.0` 고정
 
 이번에 검토한 릴리스를 재현하려면 정확한 tag를 고정해 클론하세요.
 
 ```bash
-git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 빠른 사용법
 
 ### 간편 계정 입력
+
+<!-- public-sample-access-boundary -->
+샤오홍수 웹사이트의 비로그인 읽기는 로그인 장벽, CAPTCHA 또는 기타 접근 제어로 차단될 수 있습니다. 이는 예상된 경계이며 Skill 고장이 아닙니다. 이 프로젝트는 로그인하거나 접근 제어를 우회하지 않습니다. 차단되면 플랫폼 로그인 없이 사용할 수 있는 `ACCOUNT_PACKAGE` 기본 경로에 자신의 내보내기/자료 패키지를 제공하거나, 3–8개 자료를 `QUICK_SET`으로 제공하세요.
 
 ```text
 $xhs-creator-distill의 간편 모드를 사용해서
@@ -128,10 +132,12 @@ $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기
 
 ### 결정론적 자료 패키지 어댑터
 
-`v0.3.0`에는 Python 표준 라이브러리만 사용해 로컬에서 실행하는 전처리 도구가 포함됩니다(Python 3.10 이상 필요). 정규 CSV, JSON 또는 Markdown 디렉터리를 입력받아 명시된 리소스 한도 안에서 목록과 안정적인 근거 매핑을 만든 다음, 5계층 분석용 자료를 Skill에 전달합니다. 한도에 도달하면 처리를 중지하고 `READY`를 반환하지 않습니다.
+`v0.3.0`에서 Python 표준 라이브러리만 사용하는 로컬 전처리 도구를 도입했고(Python 3.10 이상 필요), `v0.4.0`에서 엄격한 필드 매핑과 설치 후에도 안전한 절대 경로 호출을 추가했습니다. 정규 CSV, JSON 또는 Markdown 디렉터리를 입력받아 명시된 리소스 한도 안에서 목록과 안정적인 근거 매핑을 만든 다음, 5계층 분석용 자료를 Skill에 전달합니다. 한도에 도달하면 처리를 중지하고 `READY`를 반환하지 않습니다. 현재 디렉터리나 설치 위치 차이로 스크립트를 잘못 찾지 않도록 먼저 Skill 루트를 절대 경로로 설정하세요.
 
 ```bash
-python3 scripts/prepare_account_package.py INPUT OUTPUT
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT
 ```
 
 출력 디렉터리에는 다음 파일이 생성됩니다.
@@ -144,12 +150,38 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 어댑터는 네트워크 연결, 로그인, 압축 해제, 자료 패키지 내용 실행 또는 바이럴 성과 예측을 하지 않습니다. 입력 필드, 종료 상태, 안전 한도, 재현 규칙은 [자료 패키지 어댑터 명세](references/package-adapter.md)를 참고하세요.
 
+### 엄격한 필드 매핑
+
+CSV/JSON 필드 이름이 정규 필드와 다르면 엄격한 JSON 매핑을 추가할 수 있습니다. 필드 이름만 변경하며 기존 파싱, 리소스 한도, 선정 또는 안전 규칙은 바꾸지 않습니다.
+
+```json
+{
+  "schema_version": "1.0",
+  "map": {
+    "source_id": "id",
+    "author_name": "creator",
+    "text": "content",
+    "created_at": "published_at"
+  },
+  "ignored_fields": ["local_note"]
+}
+```
+
+```bash
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT \
+  --field-map /absolute/path/to/field-map.json
+```
+
+최상위에는 `schema_version`, `map`, `ignored_fields`만 허용됩니다. 모든 비정규 필드는 명시적으로 매핑하거나 무시해야 합니다. `map` 대상은 8개의 정규 필드로 제한되며, `body`는 매핑 대상이 될 수 없고 매핑하지 않은 입력 별칭으로만 허용됩니다. 알 수 없는 키/대상, 정규 소스 필드 매핑/무시, 중복 대상, map/ignore 중복, 실제 입력 대상과의 충돌, 잘못된 JSON은 종료 코드 `2`로 거부되며 결과물이 생성되지 않을 수 있습니다. 암묵적으로 추측하지 않습니다. 매핑 후 각 레코드에도 `title`이 있어야 하고 `content`와 `body` 중 정확히 하나만 있어야 합니다. manifest는 정규화된 매핑의 SHA-256을 기록하여 동일 입력과 매핑의 재현성을 보장합니다. 필드 이름은 실제 내보내기 자료에 맞추세요. 이 프로젝트는 특정 타사 수집 도구 지원을 주장하지 않으며 데이터를 대신 가져오지 않습니다. 전체 계약과 일반 합성 예시는 [가져오기 매핑 레시피](references/import-recipes.md)를 참고하세요.
+
 ### 60초 합성 데모
 
-[60초 합성 데모](examples/account-package-demo/README.md)는 완전히 가상으로 만든 CSV만 사용하며, 로그인이 필요 없고 개인 데이터를 포함하지 않습니다. 저장소 루트에서 다음 고정 오프라인 회귀 테스트를 실행하세요.
+[60초 합성 데모](examples/account-package-demo/README.md)와 [매핑 합성 데모](examples/field-map-demo/README.md)는 완전히 가상으로 만든 CSV만 사용하며, 로그인이 필요 없고 개인 데이터를 포함하지 않습니다. 저장소 루트에서 다음 고정 오프라인 회귀 테스트를 실행하세요.
 
 ```bash
 python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_demo_matches_golden_outputs -v
 ```
 
 종료 코드 `0`은 통과를 의미하며, 어댑터 manifest 상태는 `READY`입니다. 테스트는 새로 생성한 `manifest.json`, `inventory.csv`, `evidence-map.csv`, `distill-input.md`, `30-day-content-plan.csv`를 저장소의 골든 출력 5개와 바이트 단위로 비교합니다.
@@ -203,15 +235,17 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_
 - [x] `v0.2.1`: 분리된 실제 환경 자체 테스트, 권리 귀속, 외부 진입점 실패 경계 증거.
 - [x] `v0.3.0`: CSV, JSON, Markdown 디렉터리용 결정론적 자료 패키지 어댑터, 근거 매핑, 30일 계획 골격.
 - [x] `v0.3.1`: 60초 합성 CSV 데모, 골든 출력 5개, 수식/프롬프트 인젝션 회귀, macOS/Windows 바이트 일치 검증.
-- [ ] 실제 비식별화 샘플을 바탕으로 경로 및 개인정보 안전성을 낮추지 않으면서 더 많은 내보내기 필드 매핑을 추가합니다.
+- [x] `v0.4.0`: 엄격한 필드 매핑, 매핑 골든 데모, 크로스 플랫폼 회귀, 공개 읽기 실패 시 기본 경로 전환 안내.
+- [ ] 실제 비식별화 샘플을 바탕으로 일반 가져오기 레시피를 확장하되 타사 도구와의 고정 호환성을 주장하지 않습니다.
 - [ ] 비식별화된 사용 피드백을 바탕으로 샘플링과 근거 프로토콜을 개선합니다.
+- [ ] 5개 출력 언어와 전체형, 집중형, `HOLD` 보고서를 지원하는 구조 검증기를 구축합니다. 구조 통과는 의미적 진실성을 증명하지 않습니다.
 - [ ] “추출 보고서에서 독립 Skill 생성”을 선택 사항으로 제공하는 워크플로를 검토합니다. 현재 버전에서는 제공하지 않습니다.
 
 로드맵은 버전 출시를 약속하는 것이 아닙니다. 우선순위는 검증 결과와 유지보수 자원에 따라 조정됩니다.
 
 ## 유지보수 상태
 
-현재 버전은 `v0.3.1`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
+현재 버전은 `v0.4.0`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
 
 - 일반 문의 및 제안: GitHub Issues를 사용하세요.
 - 코드 및 문서 기여: 먼저 [CONTRIBUTING.md](CONTRIBUTING.md)를 읽어 보세요.

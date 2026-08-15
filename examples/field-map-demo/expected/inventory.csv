@@ -1,0 +1,7 @@
+source_id,source_path,original_id,creator,title,published_at,content_type,pinned,engagement,parse_status,complete_text,is_duplicate,duplicate_of,content_sha256,notes
+S001,row:2,M001,虚构映射创作者,先盘点再开始的一周整理法,2026-08-01,教程,true,420,PARSED,true,false,,b9c831f6489743336b911851183ef78debdae4c08b518833044cc484df719890,complete_independent_record
+S002,row:3,M002,虚构映射创作者,复盘一次过度计划的失败,2026-08-02,复盘,false,310,PARSED,true,false,,8f3b0f3d280fa39bf7ee6c2bf21a6847a50b4f66f1fa33aca655e23390d8a4b0,complete_independent_record
+S003,row:4,'+M003,虚构映射创作者,把复杂工作拆成四个检查点,2026-08-03,清单,false,870,PARSED,true,false,,77b7e87c1934ddcb75f406c345aef0eb459fb2c3b65cfb22fe7c1be043f36765,complete_independent_record
+S004,row:5,M004,虚构映射创作者,读者问题如何变成下一轮实验,2026-08-04,问答,false,260,PARSED,true,false,,9f6310eb8b02a7e762b64c8db66d26c614910b0dd6c5c29c33da86f249965975,complete_independent_record
+S005,row:6,M005,虚构映射创作者,重复收录的复盘条目,2026-08-05,复盘,false,305,PARSED,true,true,S002,8f3b0f3d280fa39bf7ee6c2bf21a6847a50b4f66f1fa33aca655e23390d8a4b0,exact_normalized_content_duplicate
+S006,row:7,M006,虚构映射创作者,低信息占位条目,2026-08-06,占位,false,20,PARSED,false,false,,064eb4483e014fdcbdf814f179cfb4a1b4309a8d4b52b4e40ddde872d0782380,content_shorter_than_40_characters

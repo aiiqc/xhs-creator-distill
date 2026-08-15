@@ -12,6 +12,7 @@
 6. 覆盖账本
 7. 失败与降级
 8. 安全与隐私
+9. 当前与后续阶段
 
 ## 覆盖级别
 
@@ -85,11 +86,13 @@
 
 CSV、JSON 或 Markdown 目录使用 [确定性资料包适配器](package-adapter.md) 作为 `ACCOUNT_PACKAGE` 阶段 0–2 的默认低自由度路径：
 
-1. 在授权范围内确认 `INPUT` 与不存在或为空的 `OUTPUT`；两者不能相同、互相嵌套、含 `..`，路径本身及既存祖先组件都不能是符号链接。
-2. 运行 `python3 scripts/prepare_account_package.py INPUT OUTPUT`。
-3. 先核对 `manifest.json` 与 `inventory.csv` 是否覆盖所有已发现记录和错误，再查看 `evidence-map.csv` 的 3–8 篇选择。
-4. 把 `distill-input.md` 交给阶段 3–7 制作证据卡、五层结论与最终报告。
-5. 把 `30-day-content-plan.csv` 保留为 30 行证据约束骨架：每行状态为 `DRAFT_REQUIRES_DISTILLATION`，选题、证据和用户事实字段为空；只有最终报告中的证据与适配目标能支持其后续填写，不把它当作已验证选题或发布承诺。
+1. 从宿主实际加载的 Skill 文件路径解析真正包含当前 `SKILL.md` 的绝对根目录，设置 `XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill`；不要假设当前工作目录或搜索另一份副本。
+2. 核对 `test -f "$XHS_SKILL_ROOT/SKILL.md"` 与 `test -f "$XHS_SKILL_ROOT/scripts/prepare_account_package.py"`。无法唯一定位实际加载副本时停止，请宿主或用户提供准确路径。
+3. 在授权范围内确认 `INPUT` 与不存在或为空的 `OUTPUT`；两者不能相同、互相嵌套、含 `..`，路径本身及既存祖先组件都不能是符号链接。
+4. 对全规范字段运行 `python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT`。CSV/JSON 含非规范字段时，按[导入映射配方](import-recipes.md)检查实际表头，再运行 `python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT --field-map MAP.json`。
+5. 先核对 manifest schema `1.1` 的 `field_mapping` 审计、`inventory.csv` 是否覆盖所有已处理记录和错误，再查看 `evidence-map.csv` 的 3–8 篇选择。映射/schema 错误退出码为 `2`，可能没有 manifest；不要称为 `HOLD` 制品。
+6. 把 `distill-input.md` 交给阶段 3–7 制作证据卡、五层结论与最终报告。
+7. 把 `30-day-content-plan.csv` 保留为 30 行证据约束骨架：每行状态为 `DRAFT_REQUIRES_DISTILLATION`，选题、证据和用户事实字段为空；只有最终报告中的证据与适配目标能支持其后续填写，不把它当作已验证选题或发布承诺。
 
 适配器成功只证明本地预处理完成，不证明资料包代表平台全量，也不证明蒸馏报告为 `PASS`。记录少于 3 篇有效独立完整内容、输入不安全、格式不受支持、全量盘点无法完成或输出制品不一致时，返回 `HOLD`；不要手工补造缺失记录或结论。
 
@@ -140,7 +143,8 @@ CSV、JSON 或 Markdown 目录使用 [确定性资料包适配器](package-adapt
 | 宿主无浏览能力 | `HOLD` | 不声称已查看账号，提供两个降级输入 |
 | 资料包中只有 1–2 篇有效完整内容 | `HOLD` | 可给低置信度有限观察，请求补样 |
 | `ACCOUNT_PACKAGE` 完成全包盘点前触及资源上限 | `HOLD` | 报告已处理和未处理范围；用户确认明确批次后，以新的有界范围重新执行 |
-| 确定性适配器拒绝输入、输出不完整或制品计数不一致 | `HOLD` | 保留错误并修正本地输入或改用受支持格式；不联网、不解压、不猜字段 |
+| 确定性适配器以退出码 `2` 拒绝输入/映射 schema，且未写 manifest | `HOLD`（Skill 流程） | 保留 stderr 并修正输入或显式映射；不得声称存在适配器 `HOLD` 制品 |
+| 确定性适配器写出 `HOLD` manifest，或输出制品计数不一致 | `HOLD` | 读取准确原因并修正本地输入；不联网、不解压、不猜字段 |
 | `PUBLIC_SAMPLE` 有 3–8 篇有效深析样本，但可见目录覆盖不完整 | `PASS` | 可交付“已覆盖范围的样本报告”，必须显示缺口 |
 
 ## 安全与隐私
@@ -151,3 +155,9 @@ CSV、JSON 或 Markdown 目录使用 [确定性资料包适配器](package-adapt
 - 使用简短转述和证据 ID，不公开复制大段第三方原文。
 - 不使用此流程建立敏感人物画像，不把公开表达当作真实私下人格。
 - 确定性适配器只读取用户指定的本地输入并写入用户指定的本地输出目录；不联网、不解压、不跟随符号链接、不执行输入内容，也不覆盖原始材料。
+
+## 当前与后续阶段
+
+- 当前只交付可审计的账号材料预处理与蒸馏报告，不生成、安装或写入个人 Skill。
+- 下一阶段优先实现多语言与多报告类型的结构验证器，让报告契约先可机器检查。
+- 个人 Skill 生成排在结构验证器之后，且须另行设计证据门禁、防冒充与权利边界；不把路线图当作当前能力或版本承诺。

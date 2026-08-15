@@ -37,8 +37,8 @@
 | 模式 | 輸入 | 預設行為 | 適用對象 |
 | --- | --- | --- | --- |
 | `QUICK_SET` | 3–8 篇代表筆記 | 全部深析，不連網 | 追求快速、精準與隱私可控的人 |
-| `PUBLIC_SAMPLE` | 公開帳號 URL 或唯一識別碼 | 最多清點 60 個可見項目，分層深析最多 8 篇 | 希望一句指令就能開始的懶人使用者 |
-| `ACCOUNT_PACKAGE` | 帳號匯出檔、檔案、資料夾或結構化集合 | 先清點完整資料包，再選 3–8 篇深析 | 需要資料包層級覆蓋與可複核結論的人 |
+| `PUBLIC_SAMPLE` | 公開帳號 URL 或唯一識別碼 | 最多清點 60 個可見項目，分層深析最多 8 篇；可能被存取控制阻擋 | 想先嘗試公開讀取的使用者 |
+| `ACCOUNT_PACKAGE` | 帳號匯出檔、檔案、資料夾或結構化集合 | 無需登入平台；先清點完整資料包，再選 3–8 篇深析 | 需要高成功率整號主路徑、資料包層級覆蓋與可複核結論的人 |
 
 ### 關於「整個帳號」的誠實邊界
 
@@ -46,6 +46,7 @@
 - 只有使用者提供匯出檔或資料包，才能進行**目前資料包範圍內的整體清點**。
 - 即使使用者表示該資料為完整匯出，報告仍會註明「未向平台獨立驗證」。
 - 每份帳號報告都會顯示發現數、解析數、完整文字數、深析數、停止原因和未覆蓋項目。
+- `ACCOUNT_PACKAGE` 是無需登入平台、成功率更可控的整號主路徑；其「整體」僅指使用者提供的目前資料包範圍。
 
 ## 它提煉什麼
 
@@ -77,17 +78,20 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 將 `/path/to/your/skills` 替換為實際目錄，再依宿主說明重新載入 Skill。
 
-### 固定 `v0.3.1` 安裝
+### 固定 `v0.4.0` 安裝
 
 若要重現本次已審查的發佈版本，請鎖定 tag：
 
 ```bash
-git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 快速使用
 
 ### 懶人帳號入口
+
+<!-- public-sample-access-boundary -->
+對小紅書主站的未登入讀取可能被登入牆、驗證碼或其他存取控制阻擋，這是預期邊界，不代表 Skill 故障。本專案不會登入或繞過存取控制；遇到阻擋時，請改用無需登入平台的 `ACCOUNT_PACKAGE` 主路徑，上傳自己的匯出檔/資料包，或提供 3–8 篇材料使用 `QUICK_SET`。
 
 ```text
 請使用 $xhs-creator-distill 的懶人模式，
@@ -128,10 +132,12 @@ git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill
 
 ### 確定性資料包轉接器
 
-`v0.3.0` 提供一個只在本機執行、僅依賴 Python 標準函式庫的預處理器（需要 Python 3.10+）。它接受規範 CSV、JSON 或 Markdown 目錄，先在明確資源上限內產生清點與穩定證據對應，再交給 Skill 進行五層分析；觸及上限時會停止並拒絕 `READY`：
+`v0.3.0` 引入只在本機執行、僅依賴 Python 標準函式庫的預處理器（需要 Python 3.10+）；`v0.4.0` 在其上加入嚴格欄位映射與安裝後絕對路徑呼叫。它接受規範 CSV、JSON 或 Markdown 目錄，先在明確資源上限內產生清點與穩定證據對應，再交給 Skill 進行五層分析；觸及上限時會停止並拒絕 `READY`。為避免目前目錄或安裝位置不同造成腳本解析錯誤，先將 Skill 根目錄設為絕對路徑：
 
 ```bash
-python3 scripts/prepare_account_package.py INPUT OUTPUT
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT
 ```
 
 輸出目錄包含：
@@ -144,12 +150,38 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 轉接器不連網、不登入、不解壓縮、不執行資料包內容，也不產生「爆款」判斷。輸入欄位、結束狀態、安全上限與可重跑規則請見[資料包轉接器規範](references/package-adapter.md)。
 
+### 嚴格欄位映射
+
+當自己的 CSV/JSON 欄位名稱與規範欄位不同，可額外提供嚴格 JSON 映射；它只重新命名欄位，不改變既有解析、資源上限、取樣或安全規則：
+
+```json
+{
+  "schema_version": "1.0",
+  "map": {
+    "source_id": "id",
+    "author_name": "creator",
+    "text": "content",
+    "created_at": "published_at"
+  },
+  "ignored_fields": ["local_note"]
+}
+```
+
+```bash
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT \
+  --field-map /absolute/path/to/field-map.json
+```
+
+映射頂層只允許 `schema_version`、`map` 與 `ignored_fields`。所有非規範欄位都必須明確映射或忽略；`map` 目標只允許八個規範欄位，`body` 不能作為映射目標，只能作為未映射輸入的相容別名。未知鍵/目標、規範來源欄位的映射或忽略、重複目標、映射與忽略重疊、實際輸入目標衝突或無效 JSON 均會以結束代碼 `2` 拒絕，且可能不產生制品，不會靜默猜測。映射後的每筆記錄仍須有 `title`，並且在 `content` 與 `body` 中恰有一個內容欄位。manifest 會記錄正規化映射的 SHA-256，確保相同輸入與相同映射可重跑。欄位名稱應以實際取得的匯出為準；本專案不宣稱支援任何特定第三方擷取工具，也不負責取得資料。完整契約與通用合成範例請見[匯入映射配方](references/import-recipes.md)。
+
 ### 60 秒合成 Demo
 
-[60 秒合成 Demo](examples/account-package-demo/README.md) 完全使用虛構 CSV，無需登入，也不包含私人資料。從倉庫根目錄執行固定離線回歸：
+[60 秒合成 Demo](examples/account-package-demo/README.md) 與[帶映射合成 Demo](examples/field-map-demo/README.md) 完全使用虛構 CSV，無需登入，也不包含私人資料。從倉庫根目錄執行固定離線回歸：
 
 ```bash
 python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_demo_matches_golden_outputs -v
 ```
 
 測試進程以結束代碼 `0` 表示通過，轉接器 manifest 狀態為 `READY`；它會將新產生的 `manifest.json`、`inventory.csv`、`evidence-map.csv`、`distill-input.md` 和 `30-day-content-plan.csv` 與倉庫中的五項黃金輸出進行逐位元組比對。
@@ -203,15 +235,17 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_
 - [x] `v0.2.1`：發佈隔離的真實世界自測、著作權歸屬與外部入口失敗邊界證據。
 - [x] `v0.3.0`：CSV、JSON 與 Markdown 目錄的確定性資料包轉接器、證據對應與30天計畫骨架。
 - [x] `v0.3.1`：60 秒合成 CSV Demo、五項黃金輸出、公式/提示注入回歸與 macOS/Windows 位元組一致性驗證。
-- [ ] 根據真實且去識別化的樣本增加更多匯出欄位對應，不降低路徑與隱私安全。
+- [x] `v0.4.0`：嚴格欄位映射、帶映射黃金 Demo、跨平台回歸，以及公開讀取失敗的主路徑降級說明。
+- [ ] 根據真實且去識別化的樣本擴充通用匯入配方，不宣稱固定相容第三方工具。
 - [ ] 根據去識別化的使用回饋，優化取樣與證據協定。
+- [ ] 建立涵蓋五種輸出語言及完整、聚焦、`HOLD` 報告的結構驗證器；結構通過不等於語意真實。
 - [ ] 評估「從提煉報告生成獨立 Skill」的選用流程；當前版本不提供。
 
 路線圖不構成版本承諾，優先順序會根據驗證結果與維護資源調整。
 
 ## 維護狀態
 
-當前版本為 `v0.3.1`。專案依 [Semantic Versioning](https://semver.org/) 記錄版本，並在 [CHANGELOG](CHANGELOG.md) 中說明變更。
+當前版本為 `v0.4.0`。專案依 [Semantic Versioning](https://semver.org/) 記錄版本，並在 [CHANGELOG](CHANGELOG.md) 中說明變更。
 
 - 一般問題與建議：使用 GitHub Issues。
 - 程式碼與文件貢獻：請先閱讀 [CONTRIBUTING.md](CONTRIBUTING.md)。

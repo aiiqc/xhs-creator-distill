@@ -21,10 +21,13 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 
-SCHEMA_VERSION = "1.0"
+ADAPTER_VERSION = "0.4.0"
+SCHEMA_VERSION = "1.1"
+FIELD_MAP_SCHEMA_VERSION = "1.0"
 SELECTION_PROTOCOL = "pinned-recent-engagement-type-source-order-v1"
 MAX_RECORDS = 500
 MAX_TEXT_BYTES = 50 * 1024 * 1024
+MAX_FIELD_MAP_BYTES = 64 * 1024
 MAX_DIRECTORY_ENTRIES = 1000
 MAX_TEXT_LINES = 200_000
 MIN_CONTENT_CHARACTERS = 40
@@ -110,6 +113,27 @@ class LoadResult:
     warnings: list[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class FieldMapping:
+    applied: bool
+    schema_version: str | None
+    sha256: str | None
+    mapped_fields: dict[str, str]
+    ignored_fields: tuple[str, ...]
+
+    def manifest_value(self) -> dict[str, Any]:
+        return {
+            "applied": self.applied,
+            "schema_version": self.schema_version,
+            "sha256": self.sha256,
+            "mapped_fields": dict(self.mapped_fields),
+            "ignored_fields": list(self.ignored_fields),
+        }
+
+
+NO_FIELD_MAPPING = FieldMapping(False, None, None, {}, ())
+
+
 def normalize_text(value: str) -> str:
     """Normalize text deterministically without collapsing meaningful spacing."""
 
@@ -151,6 +175,160 @@ def scalar_text(value: Any, *, field_name: str) -> str:
             raise InputFormatError("engagement must contain finite JSON values") from exc
         return normalize_text(encoded)
     raise InputFormatError(f"field {field_name!r} must be a scalar value")
+
+
+def strict_json_loads(text: str, *, subject: str) -> Any:
+    def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise InputFormatError(f"duplicate {subject} field")
+            result[key] = value
+        return result
+
+    def reject_non_finite(value: str) -> Any:
+        raise InputFormatError(f"non-finite {subject} number is not supported: {value}")
+
+    try:
+        return json.loads(
+            text,
+            object_pairs_hook=reject_duplicate_keys,
+            parse_constant=reject_non_finite,
+        )
+    except json.JSONDecodeError as exc:
+        label = "JSON" if subject == "JSON" else f"{subject} JSON"
+        raise InputFormatError(f"invalid {label}: {exc.msg}") from exc
+
+
+def validate_field_name(value: Any, *, context: str) -> str:
+    if not isinstance(value, str):
+        raise InputFormatError(f"{context} must be a string")
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise InputFormatError(f"{context} contains an invalid Unicode scalar") from exc
+    if not value or value != value.strip():
+        raise InputFormatError(f"{context} must be non-empty without surrounding whitespace")
+    if any(
+        unicodedata.category(character).startswith("C")
+        or unicodedata.category(character) in {"Zl", "Zp"}
+        for character in value
+    ):
+        raise InputFormatError(f"{context} contains a control or line-separator character")
+    return value
+
+
+def load_field_mapping(path: Path) -> FieldMapping:
+    text, _ = decode_utf8(
+        path,
+        byte_limit=MAX_FIELD_MAP_BYTES,
+        item_label="field map",
+    )
+    payload = strict_json_loads(text, subject="field map")
+    if not isinstance(payload, dict):
+        raise InputFormatError("field map must be a JSON object")
+    for key in payload:
+        validate_field_name(key, context="field map top-level key")
+    required_keys = {"schema_version", "map", "ignored_fields"}
+    if set(payload) != required_keys:
+        missing = sorted(required_keys - set(payload))
+        extra = sorted(set(payload) - required_keys)
+        details: list[str] = []
+        if missing:
+            details.append(f"missing: {', '.join(missing)}")
+        if extra:
+            details.append(f"unsupported: {', '.join(extra)}")
+        raise InputFormatError(f"field map must contain exactly the required keys ({'; '.join(details)})")
+    if payload["schema_version"] != FIELD_MAP_SCHEMA_VERSION:
+        raise InputFormatError(
+            f"field map schema_version must be {FIELD_MAP_SCHEMA_VERSION!r}"
+        )
+    raw_map = payload["map"]
+    raw_ignored = payload["ignored_fields"]
+    if not isinstance(raw_map, dict):
+        raise InputFormatError("field map 'map' must be an object")
+    if not isinstance(raw_ignored, list):
+        raise InputFormatError("field map 'ignored_fields' must be an array")
+
+    mapped_fields: dict[str, str] = {}
+    for raw_source, raw_target in raw_map.items():
+        source = validate_field_name(raw_source, context="field map source field")
+        target = validate_field_name(raw_target, context=f"field map target for {source!r}")
+        if source in INPUT_FIELDS:
+            raise InputFormatError(f"canonical source field cannot be remapped: {source}")
+        if target not in CANONICAL_FIELDS:
+            raise InputFormatError(f"unknown canonical target field: {target}")
+        mapped_fields[source] = target
+
+    ignored_fields = [
+        validate_field_name(value, context="ignored field") for value in raw_ignored
+    ]
+    if len(ignored_fields) != len(set(ignored_fields)):
+        raise InputFormatError("field map ignored_fields must not contain duplicates")
+    canonical_ignored = sorted(set(ignored_fields) & INPUT_FIELDS)
+    if canonical_ignored:
+        raise InputFormatError(
+            f"canonical source field cannot be ignored: {', '.join(canonical_ignored)}"
+        )
+    overlap = sorted(set(mapped_fields) & set(ignored_fields))
+    if overlap:
+        raise InputFormatError(
+            f"field map source cannot be both mapped and ignored: {', '.join(overlap)}"
+        )
+    targets = list(mapped_fields.values())
+    duplicate_targets = sorted({target for target in targets if targets.count(target) > 1})
+    if duplicate_targets:
+        raise InputFormatError(
+            f"multiple source fields map to the same target: {', '.join(duplicate_targets)}"
+        )
+
+    sorted_map = dict(sorted(mapped_fields.items()))
+    sorted_ignored = tuple(sorted(ignored_fields))
+    semantic_mapping = {
+        "schema_version": FIELD_MAP_SCHEMA_VERSION,
+        "map": sorted_map,
+        "ignored_fields": list(sorted_ignored),
+    }
+    normalized = json.dumps(
+        semantic_mapping,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return FieldMapping(
+        applied=True,
+        schema_version=FIELD_MAP_SCHEMA_VERSION,
+        sha256=hashlib.sha256(normalized).hexdigest(),
+        mapped_fields=sorted_map,
+        ignored_fields=sorted_ignored,
+    )
+
+
+def apply_field_mapping(
+    raw: dict[str, Any],
+    *,
+    field_mapping: FieldMapping,
+    source_ref: str,
+) -> dict[str, Any]:
+    transformed: dict[str, Any] = {}
+    ignored = set(field_mapping.ignored_fields)
+    for raw_source, value in raw.items():
+        source = validate_field_name(raw_source, context=f"field name at {source_ref}")
+        if source in INPUT_FIELDS:
+            target = source
+        elif source in field_mapping.mapped_fields:
+            target = field_mapping.mapped_fields[source]
+        elif source in ignored:
+            continue
+        else:
+            raise InputFormatError(f"unmapped source field at {source_ref}: {source}")
+        if target in transformed:
+            raise InputFormatError(
+                f"field mapping target collision at {source_ref}: {target}"
+            )
+        transformed[target] = value
+    return transformed
 
 
 def canonicalize_mapping(
@@ -199,15 +377,22 @@ def canonicalize_mapping(
     )
 
 
-def decode_utf8(path: Path, *, byte_limit: int = MAX_TEXT_BYTES) -> tuple[str, int]:
+def decode_utf8(
+    path: Path,
+    *,
+    byte_limit: int = MAX_TEXT_BYTES,
+    item_label: str = "input",
+) -> tuple[str, int]:
     if byte_limit < 0:
         raise InputFormatError("decoded text exceeds the configured byte limit")
     try:
         before = path.lstat()
     except OSError as exc:
-        raise OutputConflictError(f"cannot inspect input file: {exc}") from exc
+        raise OutputConflictError(f"cannot inspect {item_label} file: {exc}") from exc
     if stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode):
-        raise OutputConflictError("input item must be a regular file and not a symbolic link")
+        raise OutputConflictError(
+            f"{item_label} must be a regular file and not a symbolic link"
+        )
     if before.st_size > byte_limit:
         raise InputFormatError(
             f"text_byte_limit_exceeded: file size {before.st_size} > remaining {byte_limit}"
@@ -217,11 +402,13 @@ def decode_utf8(path: Path, *, byte_limit: int = MAX_TEXT_BYTES) -> tuple[str, i
     try:
         descriptor = os.open(path, flags)
     except OSError as exc:
-        raise OutputConflictError(f"cannot open input file safely: {exc}") from exc
+        raise OutputConflictError(f"cannot open {item_label} safely: {exc}") from exc
     try:
         opened = os.fstat(descriptor)
         if not stat.S_ISREG(opened.st_mode) or not os.path.samestat(before, opened):
-            raise OutputConflictError("input file changed between inspection and open")
+            raise OutputConflictError(
+                f"{item_label} changed between inspection and open"
+            )
         chunks: list[bytes] = []
         total = 0
         while True:
@@ -240,18 +427,18 @@ def decode_utf8(path: Path, *, byte_limit: int = MAX_TEXT_BYTES) -> tuple[str, i
     try:
         after_path = path.lstat()
     except OSError as exc:
-        raise OutputConflictError(f"input file changed during read: {exc}") from exc
+        raise OutputConflictError(f"{item_label} changed during read: {exc}") from exc
     if (
         not os.path.samestat(after_path, after_open)
         or before.st_size != after_open.st_size
         or before.st_mtime_ns != after_open.st_mtime_ns
     ):
-        raise OutputConflictError("input file changed during read")
+        raise OutputConflictError(f"{item_label} changed during read")
     payload = b"".join(chunks)
     try:
         text = payload.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
-        raise InputFormatError("input must be UTF-8 or UTF-8-SIG") from exc
+        raise InputFormatError(f"{item_label} must be UTF-8 or UTF-8-SIG") from exc
     return text, len(text.encode("utf-8"))
 
 
@@ -263,7 +450,7 @@ def apply_record_limit(records: list[SourceRecord], discovered_count: int) -> tu
     ]
 
 
-def load_csv(path: Path) -> LoadResult:
+def load_csv(path: Path, field_mapping: FieldMapping) -> LoadResult:
     text, decoded_bytes = decode_utf8(path)
     try:
         csv.field_size_limit(MAX_TEXT_BYTES)
@@ -271,15 +458,20 @@ def load_csv(path: Path) -> LoadResult:
         headers = reader.fieldnames
         if headers is None:
             raise InputFormatError("CSV must contain a header row")
-        cleaned = [header.strip() if header is not None else "" for header in headers]
-        if any(not header for header in cleaned) or len(cleaned) != len(set(cleaned)):
+        cleaned = [
+            validate_field_name(header, context="CSV header field")
+            for header in headers
+        ]
+        if len(cleaned) != len(set(cleaned)):
             raise InputFormatError("CSV header names must be non-empty and unique")
-        unknown = sorted(set(cleaned) - INPUT_FIELDS)
-        if unknown:
-            raise InputFormatError(f"unsupported CSV field(s): {', '.join(unknown)}")
-        if "title" not in cleaned:
+        transformed_headers = apply_field_mapping(
+            {header: None for header in cleaned},
+            field_mapping=field_mapping,
+            source_ref="CSV header",
+        )
+        if "title" not in transformed_headers:
             raise InputFormatError("CSV requires the title field")
-        if ("content" in cleaned) == ("body" in cleaned):
+        if ("content" in transformed_headers) == ("body" in transformed_headers):
             raise InputFormatError("CSV requires exactly one of content or body")
 
         records: list[SourceRecord] = []
@@ -291,10 +483,17 @@ def load_csv(path: Path) -> LoadResult:
             if any(value is None for value in row.values()):
                 raise InputFormatError(f"CSV row {row_number} has fewer cells than the header")
             if discovered <= MAX_RECORDS:
-                normalized_row = {cleaned[index]: row.get(headers[index]) for index in range(len(headers))}
+                normalized_row = {
+                    cleaned[index]: row.get(headers[index]) for index in range(len(headers))
+                }
+                mapped_row = apply_field_mapping(
+                    normalized_row,
+                    field_mapping=field_mapping,
+                    source_ref=f"row:{row_number}",
+                )
                 records.append(
                     canonicalize_mapping(
-                        normalized_row,
+                        mapped_row,
                         source_order=discovered,
                         source_ref=f"row:{row_number}",
                         strict_fields=True,
@@ -307,27 +506,9 @@ def load_csv(path: Path) -> LoadResult:
     return LoadResult("csv", records, discovered, decoded_bytes, hold_reasons)
 
 
-def load_json(path: Path) -> LoadResult:
+def load_json(path: Path, field_mapping: FieldMapping) -> LoadResult:
     text, decoded_bytes = decode_utf8(path)
-    def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        for key, value in pairs:
-            if key in result:
-                raise InputFormatError(f"duplicate JSON field: {key}")
-            result[key] = value
-        return result
-
-    def reject_non_finite(value: str) -> Any:
-        raise InputFormatError(f"non-finite JSON number is not supported: {value}")
-
-    try:
-        payload = json.loads(
-            text,
-            object_pairs_hook=reject_duplicate_keys,
-            parse_constant=reject_non_finite,
-        )
-    except json.JSONDecodeError as exc:
-        raise InputFormatError(f"invalid JSON: {exc.msg}") from exc
+    payload = strict_json_loads(text, subject="JSON")
     if isinstance(payload, list):
         items = payload
     elif isinstance(payload, dict) and isinstance(payload.get("items"), list):
@@ -340,15 +521,20 @@ def load_json(path: Path) -> LoadResult:
     for index, item in enumerate(items[:MAX_RECORDS]):
         if not isinstance(item, dict):
             raise InputFormatError(f"JSON item {index} must be an object")
-        if "title" not in item:
+        mapped_item = apply_field_mapping(
+            item,
+            field_mapping=field_mapping,
+            source_ref=f"items[{index}]",
+        )
+        if "title" not in mapped_item:
             raise InputFormatError(f"JSON item {index} is missing required field: title")
-        if ("content" in item) == ("body" in item):
+        if ("content" in mapped_item) == ("body" in mapped_item):
             raise InputFormatError(
                 f"JSON item {index} requires exactly one of content or body"
             )
         records.append(
             canonicalize_mapping(
-                item,
+                mapped_item,
                 source_order=index + 1,
                 source_ref=f"items[{index}]",
                 strict_fields=True,
@@ -503,16 +689,18 @@ def load_markdown_directory(path: Path) -> LoadResult:
     return LoadResult("markdown_directory", records, discovered, decoded_bytes, hold_reasons)
 
 
-def load_input(path: Path) -> LoadResult:
+def load_input(path: Path, field_mapping: FieldMapping) -> LoadResult:
     if path.is_dir():
+        if field_mapping.applied:
+            raise InputFormatError("--field-map is supported only for CSV and JSON input")
         return load_markdown_directory(path)
     suffix = path.suffix.lower()
     if not path.is_file():
         raise InputFormatError("INPUT must be a regular file or Markdown directory")
     if suffix == ".csv":
-        return load_csv(path)
+        return load_csv(path, field_mapping)
     if suffix == ".json":
-        return load_json(path)
+        return load_json(path, field_mapping)
     raise InputFormatError("INPUT must be a .csv file, .json file, or Markdown directory")
 
 
@@ -727,7 +915,13 @@ def render_distill_input(
     return "\n".join(lines).rstrip() + "\n"
 
 
-def build_manifest(load_result: LoadResult, status: str, records: Sequence[SourceRecord], selected_count: int) -> dict[str, Any]:
+def build_manifest(
+    load_result: LoadResult,
+    status: str,
+    records: Sequence[SourceRecord],
+    selected_count: int,
+    field_mapping: FieldMapping,
+) -> dict[str, Any]:
     status_counts = {
         name: sum(record.text_status == name for record in records)
         for name in ("USABLE", "LOW_INFORMATION", "DUPLICATE")
@@ -752,11 +946,13 @@ def build_manifest(load_result: LoadResult, status: str, records: Sequence[Sourc
             for record in sorted(records, key=lambda item: item.selected_as or "N99")
             if record.selected_as
         ],
+        "field_mapping": field_mapping.manifest_value(),
         "hold_reasons": load_result.hold_reasons,
         "input_format": load_result.input_type,
         "input_mode": "ACCOUNT_PACKAGE",
         "limits": {
             "max_directory_entries": MAX_DIRECTORY_ENTRIES,
+            "max_field_map_bytes": MAX_FIELD_MAP_BYTES,
             "max_records": MAX_RECORDS,
             "max_text_bytes": MAX_TEXT_BYTES,
             "max_text_lines": MAX_TEXT_LINES,
@@ -770,7 +966,11 @@ def build_manifest(load_result: LoadResult, status: str, records: Sequence[Sourc
     }
 
 
-def write_artifacts(output: Path, load_result: LoadResult) -> str:
+def write_artifacts(
+    output: Path,
+    load_result: LoadResult,
+    field_mapping: FieldMapping,
+) -> str:
     records = classify_records(load_result.records)
     creators = sorted({record.creator for record in records if record.creator})
     if len(creators) > 1:
@@ -798,7 +998,13 @@ def write_artifacts(output: Path, load_result: LoadResult) -> str:
     except OSError as exc:
         raise OutputConflictError(f"cannot create atomic output stage: {exc}") from exc
     try:
-        manifest = build_manifest(load_result, status, records, len(selected))
+        manifest = build_manifest(
+            load_result,
+            status,
+            records,
+            len(selected),
+            field_mapping,
+        )
         (stage / "manifest.json").write_text(
             json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
             encoding="utf-8",
@@ -862,10 +1068,10 @@ def write_artifacts(output: Path, load_result: LoadResult) -> str:
     return status
 
 
-def lexical_absolute(path_arg: str) -> Path:
+def lexical_absolute(path_arg: str, *, path_label: str = "INPUT and OUTPUT") -> Path:
     expanded = Path(path_arg).expanduser()
     if ".." in expanded.parts:
-        raise OutputConflictError("INPUT and OUTPUT cannot contain '..' path components")
+        raise OutputConflictError(f"{path_label} cannot contain '..' path components")
     if not expanded.is_absolute():
         expanded = Path.cwd() / expanded
     return Path(os.path.abspath(os.fspath(expanded)))
@@ -948,14 +1154,42 @@ def validate_paths(input_arg: str, output_arg: str) -> tuple[Path, Path]:
     return input_resolved, output_resolved
 
 
+def validate_field_map_path(field_map_arg: str) -> Path:
+    field_map_path = lexical_absolute(field_map_arg, path_label="FIELD_MAP")
+    reject_symlink_components(field_map_path, allow_missing=True)
+    if not field_map_path.exists():
+        raise InputFormatError("FIELD_MAP does not exist")
+    try:
+        resolved = field_map_path.resolve(strict=True)
+    except OSError as exc:
+        raise OutputConflictError(f"cannot resolve FIELD_MAP: {exc}") from exc
+    if resolved != field_map_path:
+        raise OutputConflictError("FIELD_MAP must not resolve through symbolic links")
+    return resolved
+
+
 def run(argv: Sequence[str]) -> int:
-    if len(argv) != 3:
-        print("usage: prepare_account_package.py INPUT OUTPUT", file=sys.stderr)
+    if len(argv) == 2 and argv[1] == "--version":
+        print(f"xhs-creator-distill account-package adapter v{ADAPTER_VERSION}")
+        return 0
+    field_map_arg: str | None = None
+    if len(argv) == 3:
+        pass
+    elif len(argv) == 5 and argv[3] == "--field-map":
+        field_map_arg = argv[4]
+    else:
+        print(
+            "usage: prepare_account_package.py INPUT OUTPUT [--field-map MAP.json]",
+            file=sys.stderr,
+        )
         return InputFormatError.exit_code
     try:
         input_path, output_path = validate_paths(argv[1], argv[2])
-        load_result = load_input(input_path)
-        status = write_artifacts(output_path, load_result)
+        field_mapping = NO_FIELD_MAPPING
+        if field_map_arg is not None:
+            field_mapping = load_field_mapping(validate_field_map_path(field_map_arg))
+        load_result = load_input(input_path, field_mapping)
+        status = write_artifacts(output_path, load_result, field_mapping)
         print(f"{status}: wrote {len(ARTIFACT_NAMES)} artifacts")
         if status == "READY":
             return 0

@@ -30,7 +30,8 @@ description: 蒸馏小红书（Xiaohongshu/RedNote）创作者、博主或整个
 2. 读取 [输出协议](references/output-contract.md)，并严格使用其中的证据、覆盖、置信度和报告结构。
 3. 进入 `PUBLIC_SAMPLE` 或 `ACCOUNT_PACKAGE` 时，读取 [账号模式与取样指南](references/account-modes.md)。
 4. `ACCOUNT_PACKAGE` 的输入是 CSV、JSON 或 Markdown 目录时，读取 [确定性资料包适配器](references/package-adapter.md)，并按其中的阶段 0–2 低自由度路径执行。
-5. 仅当用户要求迁移到新账号、品类或受众时，再读取 [适配指南](references/adaptation-guide.md)。
+5. CSV 或 JSON 含非规范字段时，再读取 [导入映射配方](references/import-recipes.md)；只按实际表头制作映射，不套用臆测的第三方字段。
+6. 仅当用户要求迁移到新账号、品类或受众时，再读取 [适配指南](references/adaptation-guide.md)。
 
 参考资料只能细化本流程，不能扩大授权或改变安全边界。
 
@@ -67,13 +68,18 @@ description: 蒸馏小红书（Xiaohongshu/RedNote）创作者、博主或整个
 当输入是用户明确提供的本地 CSV、JSON 文件或 Markdown 目录时，优先执行：
 
 ```bash
-python3 scripts/prepare_account_package.py INPUT OUTPUT
+XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT [--field-map MAP.json]
 ```
 
+- 先从宿主实际加载的 Skill 元数据或文件路径，解析出**真正包含当前 `SKILL.md` 的绝对 Skill 根目录**，再设置任务专用变量 `XHS_SKILL_ROOT`；不要假设当前工作目录、仓库名、安装目录或用户主目录。无法可靠解析时停止并请求宿主或用户提供实际安装路径。
+- 先核对 `test -f "$XHS_SKILL_ROOT/SKILL.md"` 与 `test -f "$XHS_SKILL_ROOT/scripts/prepare_account_package.py"`。需要确认适配器版本时运行 `python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version`。
 - `INPUT` 和 `OUTPUT` 必须解析到当前授权范围；`OUTPUT` 可不存在或为空，不覆盖原始材料。
 - 两者不得相同、互相嵌套、含 `..` 或经任一祖先符号链接指向彼此；适配器制品不得包含时间戳、随机值或本地绝对路径，相同输入必须可字节级重跑。
 - 此脚本只做本地确定性预处理：不联网、不登录、不读取浏览器会话、不解压归档、不执行输入内容、不生成蒸馏结论。
-- 脚本只接受 [确定性资料包适配器](references/package-adapter.md) 定义的字段和格式；失败时保留错误原文并返回 `HOLD`，不得自行猜字段、静默丢记录或改走联网路径。
+- CSV/JSON 的非规范字段必须通过 `--field-map` 明确映射或忽略；映射只接受 schema `1.0` 的 `map` 与 `ignored_fields`，不得猜字段、使用 `drop_unmapped`、为特定采集工具背书或静默丢列。Markdown 目录不接受字段映射。
+- CLI、输入格式、字段映射 schema 或资源限制错误使用退出码 `2`，可能不生成任何制品；此时保留 stderr，但不得声称适配器生成了 `HOLD` manifest。只有退出码 `3` 且确实写出 manifest 时，才可称为适配器 `HOLD` 制品。
+- manifest schema `1.1` 必须含 `field_mapping` 审计对象；核对映射是否应用、映射 schema、SHA-256、实际映射字段与明确忽略字段。无映射时也必须保留未应用的审计对象。
 - manifest 状态只使用 `READY` / `HOLD`；`READY` 不等于分析 `PASS`。先核对资源上限内的盘点、失败项和 `evidence-map.csv`；只有至少 3 篇有效独立完整内容时，才继续制作证据卡。
 - `30-day-content-plan.csv` 是 30 行证据约束骨架，每行状态固定为 `DRAFT_REQUIRES_DISTILLATION`，选题、证据和用户事实字段保持空白。它不是内容结论、发布排程或效果保证；模型仍须按阶段 3–7 完成五层蒸馏与诚实边界。
 

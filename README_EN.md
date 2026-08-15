@@ -37,8 +37,8 @@ This project therefore provides two entry points and three auditable modes:
 | Mode | Input | Default behavior | Best for |
 | --- | --- | --- | --- |
 | `QUICK_SET` | 3–8 representative posts | Analyze all posts deeply, without network access | Users who want speed, precision, and privacy control |
-| `PUBLIC_SAMPLE` | Public account URL or unique identifier | Inventory up to 60 visible items; deeply analyze up to 8 through stratified sampling | Users who want to begin with a single instruction |
-| `ACCOUNT_PACKAGE` | Account export, file, directory, or structured collection | Inventory the entire package, then select 3–8 posts for deep analysis | Users who need package-level coverage and auditable conclusions |
+| `PUBLIC_SAMPLE` | Public account URL or unique identifier | Inventory up to 60 visible items and deeply analyze up to 8; access controls may block it | Users who want to try public reading first |
+| `ACCOUNT_PACKAGE` | Account export, file, directory, or structured collection | Requires no platform login; inventory the package, then select 3–8 posts | Users who want the higher-success whole-account path, package-level coverage, and auditable conclusions |
 
 ### Honest boundaries for a “whole account”
 
@@ -46,6 +46,7 @@ This project therefore provides two entry points and three auditable modes:
 - Only a user-provided export or package supports **an overall inventory within the current package’s scope**.
 - Even if the user says an export is complete, the report notes that this was “not independently verified against the platform.”
 - Every account report shows the numbers of items discovered, parsed, available with full text, and deeply analyzed, as well as the stop reason and uncovered items.
+- `ACCOUNT_PACKAGE` is the more controllable, higher-success whole-account path and requires no platform login; “whole” refers only to the current user-provided package.
 
 ## What it distills
 
@@ -77,17 +78,20 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 Replace `/path/to/your/skills` with the actual directory, then reload the Skill according to the host’s instructions.
 
-### Pin `v0.3.1`
+### Pin `v0.4.0`
 
 To reproduce this reviewed release, clone the exact tag:
 
 ```bash
-git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## Quick start
 
 ### Quick account entry
+
+<!-- public-sample-access-boundary -->
+Unauthenticated reads from the Xiaohongshu website may be blocked by a login wall, CAPTCHA, or another access control. This is an expected boundary, not a Skill failure. The project does not log in or bypass controls. If blocked, use the no-login `ACCOUNT_PACKAGE` primary path with your own export/package, or provide 3–8 posts through `QUICK_SET`.
 
 ```text
 Use the quick mode of $xhs-creator-distill to analyze this public
@@ -132,10 +136,12 @@ automatically claim that the package contains every item on the platform.
 
 ### Deterministic package adapter
 
-`v0.3.0` includes a local preprocessor that uses only the Python standard library (Python 3.10+ required). It accepts canonical CSV, JSON, or a Markdown directory, produces an inventory and stable evidence mapping within explicit resource limits, and then hands the selected material to the Skill for five-layer analysis. Reaching a limit stops processing and prevents `READY`:
+`v0.3.0` introduced the local, standard-library-only preprocessor (Python 3.10+ required); `v0.4.0` adds strict field mapping and installation-safe absolute-path invocation. It accepts canonical CSV, JSON, or a Markdown directory, produces an inventory and stable evidence mapping within explicit resource limits, and then hands the selected material to the Skill for five-layer analysis. Reaching a limit stops processing and prevents `READY`. To avoid resolving the script against the wrong working directory or installation, set the Skill root to an absolute path first:
 
 ```bash
-python3 scripts/prepare_account_package.py INPUT OUTPUT
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT
 ```
 
 The output directory contains:
@@ -148,12 +154,38 @@ The output directory contains:
 
 The adapter does not use the network, log in, extract archives, execute package content, or predict viral performance. See the [package adapter specification](references/package-adapter.md) for input fields, exit states, safety limits, and reproducibility rules.
 
+### Strict field mapping
+
+If your CSV/JSON uses different field names, supply a strict JSON map. It only renames fields; it does not change parsing, resource limits, selection, or safety rules:
+
+```json
+{
+  "schema_version": "1.0",
+  "map": {
+    "source_id": "id",
+    "author_name": "creator",
+    "text": "content",
+    "created_at": "published_at"
+  },
+  "ignored_fields": ["local_note"]
+}
+```
+
+```bash
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT \
+  --field-map /absolute/path/to/field-map.json
+```
+
+The top level permits only `schema_version`, `map`, and `ignored_fields`. Every non-canonical field must be explicitly mapped or ignored. Map targets are limited to the eight canonical fields; `body` cannot be a map target and is accepted only as an unmapped input alias. Unknown keys/targets, mapping or ignoring a canonical source field, duplicate targets, map/ignore overlap, collisions with actual input targets, and invalid JSON are rejected with exit code `2` and may produce no artifacts; the adapter never guesses silently. Each mapped record must still have `title` and exactly one of `content` or `body`. The manifest records the normalized mapping's SHA-256 so identical input and mapping are reproducible. Use the names in the export you actually have: this project does not claim support for any specific third-party collection tool and does not acquire data for you. See the [import mapping recipes](references/import-recipes.md) for the full contract and generic synthetic examples.
+
 ### 60-second synthetic demo
 
-The [60-second synthetic demo](examples/account-package-demo/README.md) uses only fictional CSV data, requires no login, and contains no private data. Run the fixed offline regression from the repository root:
+The [60-second synthetic demo](examples/account-package-demo/README.md) and [mapped synthetic demo](examples/field-map-demo/README.md) use only fictional CSV data, require no login, and contain no private data. Run the fixed offline regressions from the repository root:
 
 ```bash
 python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_demo_matches_golden_outputs -v
 ```
 
 Exit code `0` indicates a pass, and the adapter manifest status is `READY`. The test compares the newly generated `manifest.json`, `inventory.csv`, `evidence-map.csv`, `distill-input.md`, and `30-day-content-plan.csv` byte for byte with the repository's five golden outputs.
@@ -207,15 +239,17 @@ The [MIT License](LICENSE) covers only content that this repository’s authors 
 - [x] `v0.2.1`: isolated real-world self-tests, rights attribution, and evidence for external-entry failure boundaries.
 - [x] `v0.3.0`: deterministic CSV, JSON, and Markdown-directory package adapter, evidence mappings, and a 30-day planning skeleton.
 - [x] `v0.3.1`: a 60-second synthetic CSV demo, five golden outputs, formula/prompt-injection regressions, and macOS/Windows byte-consistency validation.
-- [ ] Add more export-field mappings from real, de-identified samples without weakening path or privacy safety.
+- [x] `v0.4.0`: strict field mapping, a mapped golden demo, cross-platform regressions, and primary-path fallback guidance when public reading fails.
+- [ ] Expand generic import recipes from real, de-identified samples without claiming fixed compatibility with third-party tools.
 - [ ] Improve the sampling and evidence protocols based on de-identified usage feedback.
+- [ ] Build a structural validator for five output languages and full, focused, and `HOLD` reports; structural success does not prove semantic truth.
 - [ ] Evaluate an optional workflow for generating an independent Skill from a distillation report; the current version does not provide this.
 
 The roadmap is not a version commitment. Priorities may change based on validation results and available maintenance resources.
 
 ## Maintenance status
 
-The current version is `v0.3.1`. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
+The current version is `v0.4.0`. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
 
 - General questions and suggestions: use GitHub Issues.
 - Code and documentation contributions: read [CONTRIBUTING.md](CONTRIBUTING.md) first.

@@ -37,8 +37,8 @@
 | 模式 | 输入 | 默认行为 | 适合谁 |
 | --- | --- | --- | --- |
 | `QUICK_SET` | 3–8 篇代表笔记 | 全部深析，不联网 | 要快、要精准、要隐私可控 |
-| `PUBLIC_SAMPLE` | 公开账号 URL 或唯一标识 | 最多盘点 60 个可见项，分层深析最多 8 篇 | 想一条指令开始的懒人用户 |
-| `ACCOUNT_PACKAGE` | 账号导出、文件、目录或结构化合集 | 先盘点全包，再选 3–8 篇深析 | 要资料包级覆盖和可复核结论 |
+| `PUBLIC_SAMPLE` | 公开账号 URL 或唯一标识 | 最多盘点 60 个可见项，分层深析最多 8 篇；可能被访问控制阻断 | 想先尝试公开读取的用户 |
+| `ACCOUNT_PACKAGE` | 账号导出、文件、目录或结构化合集 | 无需平台登录；先盘点全包，再选 3–8 篇深析 | 要高成功率整号主路径、资料包级覆盖和可复核结论 |
 
 ### 关于“整个账号”的诚实边界
 
@@ -46,6 +46,7 @@
 - 只有用户提供导出或资料包，才能做**当前资料包范围内的整体盘点**。
 - 即使用户说它是完整导出，报告也会注明“未向平台独立验证”。
 - 每份账号报告都显示发现数、解析数、完整文本数、深析数、停止原因和未覆盖项。
+- `ACCOUNT_PACKAGE` 是无需平台登录、成功率更可控的整号主路径；其“整体”仅指用户提供的当前资料包范围。
 
 ## 它蒸馏什么
 
@@ -77,17 +78,20 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 将 `/path/to/your/skills` 替换为真实目录，再按宿主说明重新加载 Skill。
 
-### 固定 `v0.3.1` 安装
+### 固定 `v0.4.0` 安装
 
 需要重现本次已审查发布版时，请锁定 tag：
 
 ```bash
-git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 快速使用
 
 ### 懒人账号入口
+
+<!-- public-sample-access-boundary -->
+对小红书主站的未登录读取可能被登录墙、验证码或其他访问控制阻断，这是预期边界，不代表 Skill 故障。本项目不会登录或绕过访问控制；遇到阻断时，请改用无需平台登录的 `ACCOUNT_PACKAGE` 主路径，上传自己的导出/资料包，或提供 3–8 篇材料使用 `QUICK_SET`。
 
 ```text
 请使用 $xhs-creator-distill 的懒人模式，
@@ -128,10 +132,12 @@ git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill
 
 ### 确定性资料包适配器
 
-`v0.3.0` 提供一个只在本地运行、仅依赖 Python 标准库的预处理器（需要 Python 3.10+）。它接受规范 CSV、JSON 或 Markdown 目录，先在明确资源上限内生成盘点与稳定证据映射，再交给 Skill 做五层分析；触及上限时会停止并拒绝 `READY`：
+`v0.3.0` 引入只在本地运行、仅依赖 Python 标准库的预处理器（需要 Python 3.10+）；`v0.4.0` 在其上加入严格字段映射与安装后绝对路径调用。它接受规范 CSV、JSON 或 Markdown 目录，先在明确资源上限内生成盘点与稳定证据映射，再交给 Skill 做五层分析；触及上限时会停止并拒绝 `READY`。为避免当前目录或安装位置不同导致脚本解析错误，先把 Skill 根目录设为绝对路径：
 
 ```bash
-python3 scripts/prepare_account_package.py INPUT OUTPUT
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT
 ```
 
 输出目录包含：
@@ -144,12 +150,38 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 适配器不联网、不登录、不解压、不执行包内内容，也不生成“爆款”判断。输入字段、退出状态、安全上限和可重跑规则见[资料包适配器规范](references/package-adapter.md)。
 
+### 严格字段映射
+
+当自己的 CSV/JSON 字段名与规范字段不同，可额外提供严格 JSON 映射；它只重命名字段，不改变现有解析、资源上限、取样或安全规则：
+
+```json
+{
+  "schema_version": "1.0",
+  "map": {
+    "source_id": "id",
+    "author_name": "creator",
+    "text": "content",
+    "created_at": "published_at"
+  },
+  "ignored_fields": ["local_note"]
+}
+```
+
+```bash
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT \
+  --field-map /absolute/path/to/field-map.json
+```
+
+映射顶层只允许 `schema_version`、`map` 和 `ignored_fields`。所有非规范字段都必须明确映射或忽略；`map` 目标只允许八个规范字段，`body` 不能作为映射目标，只能作为未映射输入的兼容别名。未知键/目标、规范源字段的映射或忽略、重复目标、映射与忽略重叠、实际输入目标冲突或非法 JSON 均会以退出码 `2` 拒绝，且可能不生成制品，不会静默猜测。映射后的每条记录仍须有 `title`，并且在 `content` 与 `body` 中恰有一个内容字段。manifest 会记录规范化映射的 SHA-256，确保相同输入与相同映射可重跑。字段名应以实际取得的导出为准；本项目不宣称支持任何特定第三方采集工具，也不负责取得数据。完整契约与通用合成示例见[导入映射配方](references/import-recipes.md)。
+
 ### 60 秒合成 Demo
 
-[60 秒合成 Demo](examples/account-package-demo/README.md) 完全使用虚构 CSV，无需登录，也不包含私人数据。从仓库根目录运行固定离线回归：
+[60 秒合成 Demo](examples/account-package-demo/README.md) 与[带映射合成 Demo](examples/field-map-demo/README.md) 完全使用虚构 CSV，无需登录，也不包含私人数据。从仓库根目录运行固定离线回归：
 
 ```bash
 python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_demo_matches_golden_outputs -v
 ```
 
 测试进程以退出码 `0` 表示通过，适配器 manifest 状态为 `READY`；它会将新生成的 `manifest.json`、`inventory.csv`、`evidence-map.csv`、`distill-input.md` 和 `30-day-content-plan.csv` 与仓库中的五项黄金输出逐字节比较。
@@ -203,15 +235,17 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_
 - [x] `v0.2.1`：发布隔离的真实世界自测、版权归属和外部入口失败边界证据。
 - [x] `v0.3.0`：CSV、JSON 与 Markdown 目录的确定性资料包适配器、证据映射和30天计划骨架。
 - [x] `v0.3.1`：60 秒合成 CSV Demo、五项黄金输出、公式/提示注入回归和 macOS/Windows 字节一致性验证。
-- [ ] 根据真实、去标识化样本增加更多导出字段映射，不降低路径和隐私安全。
+- [x] `v0.4.0`：严格字段映射、带映射黄金 Demo、跨平台回归，以及公开读取失败的主路径降级说明。
+- [ ] 根据真实、去标识化样本扩充通用导入配方，不宣称固定兼容第三方工具。
 - [ ] 根据去标识化使用反馈优化取样和证据协议。
+- [ ] 建立覆盖五种输出语言及完整、聚焦、`HOLD` 报告的结构验证器；结构通过不等于语义真实。
 - [ ] 评估“从蒸馏报告生成独立 Skill”的可选流程；当前版本不提供。
 
 路线图不构成版本承诺，优先级会根据验证结果与维护资源调整。
 
 ## 维护状态
 
-当前版本为 `v0.3.1`。项目按 [Semantic Versioning](https://semver.org/) 记录版本，并在 [CHANGELOG](CHANGELOG.md) 中说明变更。
+当前版本为 `v0.4.0`。项目按 [Semantic Versioning](https://semver.org/) 记录版本，并在 [CHANGELOG](CHANGELOG.md) 中说明变更。
 
 - 一般问题与建议：使用 GitHub Issues。
 - 代码与文档贡献：先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。

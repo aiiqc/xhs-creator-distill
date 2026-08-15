@@ -1,0 +1,7 @@
+note_id,author_label,headline,text_body,publish_time,kind,is_pinned,like_count,source_url,export_batch
+M001,虚构映射创作者,先盘点再开始的一周整理法,这是一篇完全虚构的映射测试正文。它先清点现有物品和可用时间，再选择一项最小动作，最后记录没有完成的原因。,2026-08-01,教程,true,420,NOT_STORED,SYNTHETIC_ONLY
+M002,虚构映射创作者,复盘一次过度计划的失败,这是一篇完全虚构的映射测试正文。它说明计划项目过多如何造成中断，并用减少目标、保留缓冲和复查停止条件来修正。,2026-08-02,复盘,false,310,NOT_STORED,SYNTHETIC_ONLY
+"+M003",虚构映射创作者,把复杂工作拆成四个检查点,这是一篇完全虚构的映射测试正文。它使用输入审计、执行记录、结果核对和失败回退四个检查点组织工作。,2026-08-03,清单,false,870,NOT_STORED,SYNTHETIC_ONLY
+M004,虚构映射创作者,读者问题如何变成下一轮实验,这是一篇完全虚构的映射测试正文。它先归并重复问题，再选择一个可验证变量，并写明观察信号与停止条件。,2026-08-04,问答,false,260,NOT_STORED,SYNTHETIC_ONLY
+M005,虚构映射创作者,重复收录的复盘条目,这是一篇完全虚构的映射测试正文。它说明计划项目过多如何造成中断，并用减少目标、保留缓冲和复查停止条件来修正。,2026-08-05,复盘,false,305,NOT_STORED,SYNTHETIC_ONLY
+M006,虚构映射创作者,低信息占位条目,占位,2026-08-06,占位,false,20,NOT_STORED,SYNTHETIC_ONLY

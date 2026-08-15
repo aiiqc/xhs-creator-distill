@@ -13,8 +13,11 @@ from urllib.parse import unquote
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_VERSION = "v0.3.1"
+RELEASE_VERSION = "v0.4.0"
 DEMO_INPUT_SHA256 = "f96a97a4a5b0cd85df9aa7152b29f4ef0205e676a6c5d44d3472225977c8f825"
+FIELD_MAP_DEMO_INPUT_SHA256 = "4e5c06800b86a4d709df5f8e6e73b56cdba1be8d3683c75554baae48c26ed9b9"
+FIELD_MAP_DEMO_SPEC_SHA256 = "410bea03eb3fa1575216679672dfb255d0b9c6541d9a14dd5afc423cf5ae5d15"
+FIELD_MAP_SEMANTIC_SHA256 = "d11ce235f8eee151fc162e9fbb0985eed708176da397b5494aec8a1c1fa0ba81"
 
 DEMO_ARTIFACTS = (
     "manifest.json",
@@ -66,6 +69,7 @@ REQUIRED_FILES = (
     "agents/openai.yaml",
     "references/account-modes.md",
     "references/package-adapter.md",
+    "references/import-recipes.md",
     "references/distill-framework.md",
     "references/adaptation-guide.md",
     "references/output-contract.md",
@@ -77,6 +81,14 @@ REQUIRED_FILES = (
     "examples/account-package-demo/expected/evidence-map.csv",
     "examples/account-package-demo/expected/distill-input.md",
     "examples/account-package-demo/expected/30-day-content-plan.csv",
+    "examples/field-map-demo/README.md",
+    "examples/field-map-demo/input/posts-export.csv",
+    "examples/field-map-demo/input/field-map.json",
+    "examples/field-map-demo/expected/manifest.json",
+    "examples/field-map-demo/expected/inventory.csv",
+    "examples/field-map-demo/expected/evidence-map.csv",
+    "examples/field-map-demo/expected/distill-input.md",
+    "examples/field-map-demo/expected/30-day-content-plan.csv",
     "evals/README.md",
     "evals/rubric.md",
     "evals/cases/normal-5-notes.md",
@@ -411,33 +423,53 @@ def check_readme_sync(errors: list[str]) -> None:
         "ACCOUNT_PACKAGE",
         RELEASE_VERSION,
         "validation/real-world/",
-        "python3 scripts/prepare_account_package.py INPUT OUTPUT",
+        "XHS_SKILL_ROOT",
+        'python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT',
+        "--field-map",
+        "<!-- public-sample-access-boundary -->",
         "manifest.json",
         "30-day-content-plan.csv",
         "(examples/account-package-demo/README.md)",
+        "(examples/field-map-demo/README.md)",
         "AdapterTestCase.test_repository_demo_matches_golden_outputs",
+        "AdapterTestCase.test_field_map_demo_matches_golden_outputs",
         "60",
     )
     safety_fragments = {
-        "README.md": ("不登录", "不使用 Cookie", "不得声称全量", "未向平台独立验证"),
-        "README_ZH-TW.md": ("不登入", "不使用 Cookie", "不得宣稱為全量", "未向平台獨立驗證"),
+        "README.md": (
+            "不登录",
+            "不使用 Cookie",
+            "不得声称全量",
+            "未向平台独立验证",
+            "`body` 不能作为映射目标",
+        ),
+        "README_ZH-TW.md": (
+            "不登入",
+            "不使用 Cookie",
+            "不得宣稱為全量",
+            "未向平台獨立驗證",
+            "`body` 不能作為映射目標",
+        ),
         "README_EN.md": (
             "does not log in",
             "use cookies",
             "must not be presented as complete coverage",
             "not independently verified against the platform",
+            "`body` cannot be a map target",
         ),
         "README_JA.md": (
             "ログイン",
             "Cookie",
             "全件を対象にしたとは表現できません",
             "全データと照合して独立検証",
+            "`body` はターゲットにできず",
         ),
         "README_KO.md": (
             "로그인",
             "Cookie",
             "전체 데이터를 다루었다고 주장해서는 안 됩니다",
             "실제 전체 데이터와 대조해",
+            "`body`는 매핑 대상이 될 수 없고",
         ),
     }
     canonical = read_text(ROOT / "README.md", errors)
@@ -486,7 +518,10 @@ def check_package_adapter_contract(errors: list[str]) -> None:
     required_fragments = {
         "SKILL.md": (
             "references/package-adapter.md",
-            "python3 scripts/prepare_account_package.py INPUT OUTPUT",
+            "references/import-recipes.md",
+            'python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT',
+            "--field-map",
+            "field_mapping",
             "30-day-content-plan.csv",
         ),
         "references/package-adapter.md": (
@@ -499,20 +534,32 @@ def check_package_adapter_contract(errors: list[str]) -> None:
             "distill-input.md",
             "30-day-content-plan.csv",
             "字节级一致",
+            "schema 固定为 `1.1`",
+            "ignored_fields",
+            "drop_unmapped",
+        ),
+        "references/import-recipes.md": (
+            "XHS_SKILL_ROOT",
+            "--field-map",
+            "ignored_fields",
+            "不代表、兼容或背书",
         ),
         "evals/cases/deterministic-package-adapter.md": (
             "READY",
             "HOLD",
             "DRAFT_REQUIRES_DISTILLATION",
             "字节级一致",
+            "--field-map",
         ),
         ".github/workflows/validate.yml": (
             "python3 scripts/test_prepare_account_package.py",
             "AdapterTestCase.test_repository_demo_matches_golden_outputs",
+            "AdapterTestCase.test_field_map_demo_matches_golden_outputs",
             "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
         ),
         ".gitattributes": (
             "examples/account-package-demo/** text eol=lf",
+            "examples/field-map-demo/** text eol=lf",
         ),
         "examples/account-package-demo/README.md": (
             "SYNTHETIC_DEMO",
@@ -520,9 +567,18 @@ def check_package_adapter_contract(errors: list[str]) -> None:
             "AdapterTestCase.test_repository_demo_matches_golden_outputs",
             "不是外部采用证据",
         ),
+        "examples/field-map-demo/README.md": (
+            "SYNTHETIC_FIELD_MAP_DEMO",
+            "examples/field-map-demo/input/posts-export.csv",
+            "examples/field-map-demo/input/field-map.json",
+            "AdapterTestCase.test_field_map_demo_matches_golden_outputs",
+            "does not claim compatibility",
+        ),
         "scripts/test_prepare_account_package.py": (
             "examples\" / \"account-package-demo",
+            "examples\" / \"field-map-demo",
             "test_repository_demo_matches_golden_outputs",
+            "test_field_map_demo_matches_golden_outputs",
         ),
     }
     for relative, fragments in required_fragments.items():
@@ -553,6 +609,12 @@ def check_synthetic_examples(errors: list[str]) -> None:
         candidates = list(directory.rglob("*.md"))
         if directory.name == "examples":
             candidates.append(ROOT / "examples/account-package-demo/input/posts.csv")
+            candidates.extend(
+                (
+                    ROOT / "examples/field-map-demo/input/posts-export.csv",
+                    ROOT / "examples/field-map-demo/input/field-map.json",
+                )
+            )
         for path in sorted(set(candidates)):
             if path.is_symlink():
                 add_error(errors, f"symlink is not allowed in synthetic data: {path.relative_to(ROOT)}")
@@ -691,6 +753,16 @@ def check_demo_fixture(errors: list[str]) -> None:
         return
     if manifest.get("status") != "READY":
         add_error(errors, "synthetic demo manifest must be READY")
+    if manifest.get("schema_version") != "1.1":
+        add_error(errors, "synthetic demo manifest must use schema 1.1")
+    if manifest.get("field_mapping") != {
+        "applied": False,
+        "ignored_fields": [],
+        "mapped_fields": {},
+        "schema_version": None,
+        "sha256": None,
+    }:
+        add_error(errors, "synthetic demo manifest must record an unapplied field mapping")
     if manifest.get("output_files") != list(DEMO_ARTIFACTS):
         add_error(errors, "synthetic demo manifest output file order is inconsistent")
     counts = manifest.get("counts", {})
@@ -730,6 +802,201 @@ def check_demo_fixture(errors: list[str]) -> None:
                     add_error(
                         errors,
                         f"unsafe spreadsheet prefix in synthetic demo output: "
+                        f"{name}:{row_index}:{column_index}",
+                    )
+
+
+def check_field_map_demo_fixture(errors: list[str]) -> None:
+    directory = ROOT / "examples/field-map-demo"
+    input_directory = directory / "input"
+    csv_path = input_directory / "posts-export.csv"
+    map_path = input_directory / "field-map.json"
+    expected = directory / "expected"
+
+    if any(path.is_symlink() for path in (directory, input_directory, csv_path, map_path, expected)):
+        add_error(errors, "symlink is not allowed in field-map demo paths")
+        return
+    if not directory.is_dir() or not input_directory.is_dir() or not expected.is_dir():
+        add_error(errors, "missing field-map demo directories")
+        return
+
+    found_symlink = False
+    for path in sorted(directory.rglob("*")):
+        if path.is_symlink():
+            add_error(errors, f"symlink is not allowed in field-map demo: {path.relative_to(ROOT)}")
+            found_symlink = True
+    if found_symlink:
+        return
+
+    try:
+        root_entries = list(directory.iterdir())
+        input_entries = list(input_directory.iterdir())
+        expected_entries = list(expected.iterdir())
+    except OSError as exc:
+        add_error(errors, f"cannot enumerate field-map demo directories: {exc}")
+        return
+    root_by_name = {path.name: path for path in root_entries}
+    if (
+        set(root_by_name) != {"README.md", "input", "expected"}
+        or not root_by_name.get("README.md", Path()).is_file()
+        or not root_by_name.get("input", Path()).is_dir()
+        or not root_by_name.get("expected", Path()).is_dir()
+    ):
+        add_error(errors, "field-map demo root must contain exactly README.md, input, and expected")
+        return
+    if (
+        {path.name for path in input_entries} != {"posts-export.csv", "field-map.json"}
+        or any(not path.is_file() for path in input_entries)
+    ):
+        add_error(
+            errors,
+            "field-map demo input directory must contain exactly posts-export.csv and field-map.json",
+        )
+        return
+    if (
+        {path.name for path in expected_entries} != set(DEMO_ARTIFACTS)
+        or any(not path.is_file() for path in expected_entries)
+    ):
+        add_error(
+            errors,
+            "field-map demo expected directory must contain exactly the five adapter artifacts",
+        )
+        return
+
+    demo_text_paths = [directory / "README.md", csv_path, map_path, *sorted(expected_entries)]
+    for path in demo_text_paths:
+        text = read_text(path, errors)
+        if text is None:
+            continue
+        match = CREDENTIAL_SHAPED_PATTERN.search(text)
+        if match:
+            line = text.count("\n", 0, match.start()) + 1
+            add_error(
+                errors,
+                f"credential-shaped content in field-map demo: {path.relative_to(ROOT)}:{line}",
+            )
+
+    try:
+        csv_sha256 = hashlib.sha256(csv_path.read_bytes()).hexdigest()
+        spec_sha256 = hashlib.sha256(map_path.read_bytes()).hexdigest()
+    except OSError as exc:
+        add_error(errors, f"cannot hash field-map demo input: {exc}")
+        return
+    if csv_sha256 != FIELD_MAP_DEMO_INPUT_SHA256:
+        add_error(errors, "field-map demo CSV differs from the reviewed SHA-256")
+    if spec_sha256 != FIELD_MAP_DEMO_SPEC_SHA256:
+        add_error(errors, "field-map demo mapping file differs from the reviewed SHA-256")
+
+    try:
+        spec = json.loads(map_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        add_error(errors, f"cannot parse field-map demo mapping: {exc}")
+        return
+    expected_map = {
+        "author_label": "creator",
+        "headline": "title",
+        "is_pinned": "pinned",
+        "kind": "content_type",
+        "like_count": "engagement",
+        "note_id": "id",
+        "publish_time": "published_at",
+        "text_body": "content",
+    }
+    expected_ignored = ["export_batch", "source_url"]
+    if spec != {
+        "ignored_fields": expected_ignored,
+        "map": expected_map,
+        "schema_version": "1.0",
+    }:
+        add_error(errors, "field-map demo mapping does not match the reviewed strict schema")
+
+    try:
+        with csv_path.open(encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            rows = list(reader)
+    except (OSError, UnicodeError, csv.Error) as exc:
+        add_error(errors, f"cannot parse field-map demo CSV: {exc}")
+        return
+    expected_headers = [
+        "note_id",
+        "author_label",
+        "headline",
+        "text_body",
+        "publish_time",
+        "kind",
+        "is_pinned",
+        "like_count",
+        "source_url",
+        "export_batch",
+    ]
+    if reader.fieldnames != expected_headers:
+        add_error(errors, "field-map demo CSV header order is inconsistent")
+    if len(rows) != 6:
+        add_error(errors, "field-map demo CSV must contain exactly 6 records")
+    if any(row.get("author_label") != "虚构映射创作者" for row in rows):
+        add_error(errors, "field-map demo must keep one explicit fictional creator")
+
+    manifest_path = expected / "manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        add_error(errors, f"cannot parse field-map demo manifest: {exc}")
+        return
+    if not isinstance(manifest, dict):
+        add_error(errors, "field-map demo manifest must be a JSON object")
+        return
+    if manifest.get("status") != "READY" or manifest.get("schema_version") != "1.1":
+        add_error(errors, "field-map demo manifest must be READY with schema 1.1")
+    if manifest.get("output_files") != list(DEMO_ARTIFACTS):
+        add_error(errors, "field-map demo manifest output file order is inconsistent")
+    if manifest.get("field_mapping") != {
+        "applied": True,
+        "ignored_fields": expected_ignored,
+        "mapped_fields": expected_map,
+        "schema_version": "1.0",
+        "sha256": FIELD_MAP_SEMANTIC_SHA256,
+    }:
+        add_error(errors, "field-map demo manifest mapping audit is inconsistent")
+    counts = manifest.get("counts", {})
+    expected_counts = {
+        "discovered": 6,
+        "independent_usable": 4,
+        "duplicate": 1,
+        "low_information": 1,
+        "deep_analysis_candidates": 4,
+    }
+    if not isinstance(counts, dict):
+        add_error(errors, "field-map demo manifest counts must be an object")
+    else:
+        for key, value in expected_counts.items():
+            if counts.get(key) != value:
+                add_error(errors, f"field-map demo manifest count mismatch: {key}")
+
+    inventory = read_text(expected / "inventory.csv", errors)
+    expected_text = "\n".join(
+        text
+        for text in (read_text(path, errors) for path in sorted(expected_entries))
+        if text is not None
+    )
+    if inventory is not None and "'+M003" not in inventory:
+        add_error(errors, "field-map demo does not prove spreadsheet prefix escaping")
+    if "NOT_STORED" in expected_text or "SYNTHETIC_ONLY" in expected_text:
+        add_error(errors, "field-map demo leaked explicitly ignored source values")
+
+    for name in ("inventory.csv", "evidence-map.csv", "30-day-content-plan.csv"):
+        path = expected / name
+        try:
+            with path.open(encoding="utf-8", newline="") as handle:
+                output_rows = list(csv.reader(handle))
+        except (OSError, UnicodeError, csv.Error) as exc:
+            add_error(errors, f"cannot parse field-map demo output {name}: {exc}")
+            continue
+        for row_index, row in enumerate(output_rows, start=1):
+            for column_index, cell in enumerate(row, start=1):
+                if cell.lstrip().startswith(("=", "+", "-", "@")):
+                    add_error(
+                        errors,
+                        f"unsafe spreadsheet prefix in field-map demo output: "
                         f"{name}:{row_index}:{column_index}",
                     )
 
@@ -846,6 +1113,7 @@ def main() -> int:
     check_package_adapter_contract(errors)
     check_synthetic_examples(errors)
     check_demo_fixture(errors)
+    check_field_map_demo_fixture(errors)
     check_real_world_validation(errors)
 
     if errors:

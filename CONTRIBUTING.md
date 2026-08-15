@@ -14,7 +14,8 @@
 2. 只修改当前问题需要的内容，避免顺手重构或全局格式化。
 3. 检查 Markdown 相对链接、标题结构、示例一致性和敏感信息。
 4. 修改资料包适配器时，运行 `python3 scripts/test_prepare_account_package.py`，并确认输出不包含绝对路径、时间戳或公式注入载荷。
-5. 提交 Pull Request，并如实列出已运行和未运行的验证。
+5. 修改 `--field-map` 时，确认所有非规范字段仍须显式映射或忽略，且非法/冲突映射继续以退出码 `2` 拒绝并且不留下部分输出；随后同步映射 fixture 与五个映射黄金制品。
+6. 提交 Pull Request，并如实列出已运行和未运行的验证。
 
 Commit message 建议使用简洁英文，例如：
 
@@ -64,7 +65,7 @@ fix: reject ungrounded creator claims
 - `README.md` 是项目说明的规范源。修改安装命令、模式名、安全边界或当前版本时，必须同步 `README_ZH-TW.md`、`README_EN.md`、`README_JA.md` 和 `README_KO.md`。
 - `evals/cases/` 的公开账号案例不得使用真实链接；合成测试仅使用 `example.invalid` 保留域名，且不在评测时访问网络。
 - CI 不得联网重跑 `validation/real-world/`；外部来源漂移必须作为历史记录限制说明。
-- 适配器测试必须使用合成资料，不能提交真实账号导出。临时运行输出不得进入仓库；唯一例外是 `examples/account-package-demo/expected/` 中由受审合成输入生成、并由逐字节回归锁定的五个黄金制品。
+- 适配器测试必须使用合成资料，不能提交真实账号导出。临时运行输出不得进入仓库；唯一例外是 Demo 的 `expected/` 目录中由受审合成输入与映射生成、并由逐字节回归锁定的五个黄金制品。
 
 ## Pull Request 检查清单
 
@@ -74,6 +75,7 @@ fix: reject ungrounded creator claims
 - [ ] 相对链接和 Markdown 结构已检查。
 - [ ] 多语 README 的安装命令、三种模式、适配器命令、安全边界和版本号已同步。
 - [ ] 修改 Demo 输入或适配器输出时，五个黄金制品已重新生成并通过逐字节回归。
+- [ ] 修改字段映射契约、映射 fixture 或映射输出时，映射配置、五个映射黄金制品、README 示例和两组 golden 回归已同步。
 - [ ] 未削弱安全、隐私、原创或证据边界。
 - [ ] CHANGELOG 已在需要时更新。
 

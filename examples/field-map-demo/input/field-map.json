@@ -1,0 +1,17 @@
+{
+  "ignored_fields": [
+    "export_batch",
+    "source_url"
+  ],
+  "map": {
+    "author_label": "creator",
+    "headline": "title",
+    "is_pinned": "pinned",
+    "kind": "content_type",
+    "like_count": "engagement",
+    "note_id": "id",
+    "publish_time": "published_at",
+    "text_body": "content"
+  },
+  "schema_version": "1.0"
+}

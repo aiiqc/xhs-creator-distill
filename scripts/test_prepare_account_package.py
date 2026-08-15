@@ -5,12 +5,14 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +21,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "prepare_account_package.py"
 DEMO_INPUT = ROOT / "examples" / "account-package-demo" / "input" / "posts.csv"
 DEMO_EXPECTED = ROOT / "examples" / "account-package-demo" / "expected"
+FIELD_MAP_DEMO = ROOT / "examples" / "field-map-demo"
+FIELD_MAP_DEMO_INPUT = FIELD_MAP_DEMO / "input" / "posts-export.csv"
+FIELD_MAP_DEMO_MAPPING = FIELD_MAP_DEMO / "input" / "field-map.json"
+FIELD_MAP_DEMO_EXPECTED = FIELD_MAP_DEMO / "expected"
 ARTIFACT_ORDER = [
     "manifest.json",
     "inventory.csv",
@@ -93,15 +99,25 @@ def records(count: int, *, creator: str = "Synthetic Creator") -> list[dict[str,
 class AdapterTestCase(unittest.TestCase):
     maxDiff = None
 
-    def run_adapter(self, input_path: Path, output_path: Path) -> subprocess.CompletedProcess[str]:
+    def run_adapter(
+        self,
+        input_path: Path,
+        output_path: Path,
+        *,
+        field_map: Path | None = None,
+        cwd: Path = ROOT,
+    ) -> subprocess.CompletedProcess[str]:
+        command = [
+            sys.executable,
+            str(SCRIPT),
+            str(input_path.resolve(strict=False)),
+            str(output_path.resolve(strict=False)),
+        ]
+        if field_map is not None:
+            command.extend(("--field-map", str(field_map.resolve(strict=False))))
         return subprocess.run(
-            [
-                sys.executable,
-                str(SCRIPT),
-                str(input_path.resolve(strict=False)),
-                str(output_path.resolve(strict=False)),
-            ],
-            cwd=ROOT,
+            command,
+            cwd=cwd,
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -114,6 +130,21 @@ class AdapterTestCase(unittest.TestCase):
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
+
+    def write_field_map(
+        self,
+        path: Path,
+        mapped_fields: dict[str, str],
+        ignored_fields: list[str] | None = None,
+        **extra: Any,
+    ) -> None:
+        payload: dict[str, Any] = {
+            "schema_version": "1.0",
+            "map": mapped_fields,
+            "ignored_fields": ignored_fields or [],
+        }
+        payload.update(extra)
+        self.write_json(path, payload)
 
     def read_manifest(self, output: Path) -> dict[str, Any]:
         return json.loads((output / "manifest.json").read_text(encoding="utf-8"))
@@ -176,6 +207,7 @@ class AdapterTestCase(unittest.TestCase):
                     "canonical_fields",
                     "counts",
                     "evidence_mapping",
+                    "field_mapping",
                     "hold_reasons",
                     "input_format",
                     "input_mode",
@@ -189,6 +221,17 @@ class AdapterTestCase(unittest.TestCase):
             )
             self.assertEqual(manifest["input_mode"], "ACCOUNT_PACKAGE")
             self.assertEqual(manifest["input_format"], "json")
+            self.assertEqual(manifest["schema_version"], "1.1")
+            self.assertEqual(
+                manifest["field_mapping"],
+                {
+                    "applied": False,
+                    "schema_version": None,
+                    "sha256": None,
+                    "mapped_fields": {},
+                    "ignored_fields": [],
+                },
+            )
             self.assertEqual(manifest["output_files"], ARTIFACT_ORDER)
             self.assertEqual(manifest["counts"]["discovered"], 10)
             self.assertEqual(manifest["counts"]["inventoried"], 10)
@@ -350,6 +393,393 @@ class AdapterTestCase(unittest.TestCase):
                 self.assertIn(f"    {line}", distill_input)
                 self.assertNotIn(f"\n{line}", distill_input)
             self.assert_plan_skeleton(output)
+
+    def test_field_map_demo_matches_golden_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            first_output = root / "first-output"
+            second_output = root / "second-output"
+            unrelated_cwd = root / "unrelated-cwd"
+            unrelated_cwd.mkdir()
+
+            first = self.run_adapter(
+                FIELD_MAP_DEMO_INPUT,
+                first_output,
+                field_map=FIELD_MAP_DEMO_MAPPING,
+                cwd=unrelated_cwd,
+            )
+            second = self.run_adapter(
+                FIELD_MAP_DEMO_INPUT,
+                second_output,
+                field_map=FIELD_MAP_DEMO_MAPPING,
+                cwd=unrelated_cwd,
+            )
+
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertIn("READY", first.stdout)
+            self.assert_artifact_set(first_output)
+            self.assertEqual(self.artifact_hashes(first_output), self.artifact_hashes(second_output))
+            for name in ARTIFACT_ORDER:
+                with self.subTest(artifact=name):
+                    actual = (first_output / name).read_bytes()
+                    self.assertEqual(actual, (FIELD_MAP_DEMO_EXPECTED / name).read_bytes())
+                    self.assertTrue(actual.endswith(b"\n"))
+                    self.assertNotIn(b"\r", actual)
+
+            manifest = self.read_manifest(first_output)
+            mapping = manifest["field_mapping"]
+            self.assertEqual(manifest["schema_version"], "1.1")
+            self.assertEqual(manifest["status"], "READY")
+            self.assertEqual(manifest["counts"]["discovered"], 6)
+            self.assertEqual(manifest["counts"]["independent_usable"], 4)
+            self.assertEqual(manifest["counts"]["duplicate"], 1)
+            self.assertEqual(manifest["counts"]["low_information"], 1)
+            self.assertEqual(
+                mapping,
+                {
+                    "applied": True,
+                    "schema_version": "1.0",
+                    "sha256": "d11ce235f8eee151fc162e9fbb0985eed708176da397b5494aec8a1c1fa0ba81",
+                    "mapped_fields": {
+                        "author_label": "creator",
+                        "headline": "title",
+                        "is_pinned": "pinned",
+                        "kind": "content_type",
+                        "like_count": "engagement",
+                        "note_id": "id",
+                        "publish_time": "published_at",
+                        "text_body": "content",
+                    },
+                    "ignored_fields": ["export_batch", "source_url"],
+                },
+            )
+            inventory = self.read_csv(first_output / "inventory.csv")
+            self.assertEqual(inventory[2]["original_id"], "'+M003")
+            self.assertEqual(inventory[4]["duplicate_of"], "S002")
+            self.assertEqual(inventory[5]["complete_text"], "false")
+            self.assert_plan_skeleton(first_output)
+
+    def test_json_field_mapping_is_semantically_deterministic(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            first_input = root / "first.json"
+            second_input = root / "second.json"
+            first_map = root / "first-map.json"
+            second_map = root / "second-map.json"
+            first_output = root / "first-output"
+            second_output = root / "second-output"
+            items = [
+                {
+                    "post_id": f"E{index + 1}",
+                    "headline": f"External {index + 1}",
+                    "text_body": complete_content(index + 1),
+                    "vendor_note": "ignored",
+                    "export_batch": "synthetic",
+                }
+                for index in range(3)
+            ]
+            self.write_json(first_input, {"items": items})
+            self.write_json(second_input, {"items": items})
+            self.write_field_map(
+                first_map,
+                {"post_id": "id", "headline": "title", "text_body": "content"},
+                ["vendor_note", "export_batch"],
+            )
+            second_map.write_text(
+                '{"schema_version":"1.0","ignored_fields":["export_batch","vendor_note"],'
+                '"map":{"text_body":"content","headline":"title","post_id":"id"}}\n',
+                encoding="utf-8",
+            )
+
+            first = self.run_adapter(first_input, first_output, field_map=first_map)
+            second = self.run_adapter(second_input, second_output, field_map=second_map)
+
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertEqual(self.artifact_hashes(first_output), self.artifact_hashes(second_output))
+            first_mapping = self.read_manifest(first_output)["field_mapping"]
+            second_mapping = self.read_manifest(second_output)["field_mapping"]
+            self.assertEqual(first_mapping, second_mapping)
+            self.assertTrue(first_mapping["applied"])
+            self.assertEqual(first_mapping["ignored_fields"], ["export_batch", "vendor_note"])
+            self.assertRegex(first_mapping["sha256"], r"^[0-9a-f]{64}$")
+
+    def test_field_map_schema_failures_leave_no_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            input_path = root / "input.json"
+            self.write_json(input_path, records(3))
+            cases: list[tuple[str, bytes]] = [
+                ("invalid-json", b"{"),
+                (
+                    "unknown-target",
+                    b'{"schema_version":"1.0","map":{"external":"unknown"},"ignored_fields":[]}',
+                ),
+                (
+                    "body-alias-target",
+                    b'{"schema_version":"1.0","map":{"external":"body"},"ignored_fields":[]}',
+                ),
+                (
+                    "duplicate-target",
+                    b'{"schema_version":"1.0","map":{"one":"title","two":"title"},"ignored_fields":[]}',
+                ),
+                (
+                    "canonical-remap",
+                    b'{"schema_version":"1.0","map":{"title":"content"},"ignored_fields":[]}',
+                ),
+                (
+                    "map-ignore-overlap",
+                    b'{"schema_version":"1.0","map":{"external":"title"},"ignored_fields":["external"]}',
+                ),
+                (
+                    "drop-unmapped",
+                    b'{"schema_version":"1.0","map":{},"ignored_fields":[],"drop_unmapped":true}',
+                ),
+                (
+                    "invalid-unicode-source",
+                    b'{"schema_version":"1.0","map":{"\\ud800":"title"},"ignored_fields":[]}',
+                ),
+            ]
+            for index, (name, content) in enumerate(cases):
+                with self.subTest(name=name):
+                    mapping = root / f"{name}.json"
+                    mapping.write_bytes(content)
+                    output = root / f"output-{index}"
+                    result = self.run_adapter(input_path, output, field_map=mapping)
+                    self.assertEqual(result.returncode, 2, result.stderr)
+                    self.assertFalse(output.exists())
+
+    def test_field_mapping_rejects_unmapped_missing_body_and_actual_collision(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            mapping = root / "map.json"
+            cases = [
+                (
+                    "unmapped",
+                    [{"headline": "Title", "text": complete_content(1), "undeclared": "x"}],
+                    {"headline": "title", "text": "content"},
+                    "unmapped source field",
+                ),
+                (
+                    "missing-body",
+                    [{"headline": "Title"}],
+                    {"headline": "title"},
+                    "exactly one of content or body",
+                ),
+                (
+                    "actual-collision",
+                    [{"title": "Canonical", "headline": "Mapped", "text": complete_content(1)}],
+                    {"headline": "title", "text": "content"},
+                    "target collision",
+                ),
+                (
+                    "later-record-unmapped",
+                    [
+                        {"headline": "First", "text": complete_content(1)},
+                        {
+                            "headline": "Second",
+                            "text": complete_content(2),
+                            "undeclared": "x",
+                        },
+                    ],
+                    {"headline": "title", "text": "content"},
+                    "unmapped source field at items[1]",
+                ),
+            ]
+            for index, (name, payload, mapped_fields, expected_error) in enumerate(cases):
+                with self.subTest(name=name):
+                    input_path = root / f"{name}.json"
+                    output = root / f"output-{index}"
+                    self.write_json(input_path, payload)
+                    self.write_field_map(mapping, mapped_fields)
+                    result = self.run_adapter(input_path, output, field_map=mapping)
+                    self.assertEqual(result.returncode, 2, result.stderr)
+                    self.assertIn(expected_error, result.stderr)
+                    self.assertFalse(output.exists())
+
+    def test_field_names_reject_log_control_characters(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            input_path = root / "input.json"
+            mapping = root / "field-map.json"
+            output = root / "output"
+            self.write_json(
+                input_path,
+                [
+                    {
+                        "headline": "Title",
+                        "text": complete_content(1),
+                        "evil\nFAKE PASS": "x",
+                    }
+                ],
+            )
+            self.write_field_map(mapping, {"headline": "title", "text": "content"})
+
+            result = self.run_adapter(input_path, output, field_map=mapping)
+
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("control or line-separator character", result.stderr)
+            self.assertNotIn("FAKE PASS", result.stderr)
+            self.assertFalse(output.exists())
+
+            csv_input = root / "input.csv"
+            csv_output = root / "csv-output"
+            csv_input.write_text(
+                '"headline","text","evil\nFAKE PASS"\n'
+                f'"Title","{complete_content(2)}","x"\n',
+                encoding="utf-8",
+                newline="\n",
+            )
+
+            csv_result = self.run_adapter(csv_input, csv_output, field_map=mapping)
+
+            self.assertEqual(csv_result.returncode, 2, csv_result.stderr)
+            self.assertIn("control or line-separator character", csv_result.stderr)
+            self.assertNotIn("FAKE PASS", csv_result.stderr)
+            self.assertFalse(csv_output.exists())
+
+    @unittest.skipUnless(hasattr(os, "symlink"), "symbolic links are unavailable")
+    def test_field_map_symlink_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            input_path = root / "input.json"
+            real_map = root / "real-map.json"
+            map_link = root / "map-link.json"
+            output = root / "output"
+            self.write_json(input_path, records(3))
+            self.write_field_map(real_map, {})
+            map_link.symlink_to(real_map)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    str(input_path),
+                    str(output),
+                    "--field-map",
+                    str(map_link),
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 4, result.stderr)
+            self.assertFalse(output.exists())
+
+    def test_field_map_size_and_dotdot_paths_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            nested = root / "nested"
+            nested.mkdir()
+            input_path = root / "input.json"
+            self.write_json(input_path, records(3))
+            oversized = root / "oversized-map.json"
+            oversized.write_bytes(b" " * (64 * 1024 + 1))
+
+            oversized_result = self.run_adapter(
+                input_path,
+                root / "oversized-output",
+                field_map=oversized,
+            )
+            dotdot_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    str(input_path.resolve()),
+                    str((root / "dotdot-output").resolve(strict=False)),
+                    "--field-map",
+                    str(nested.resolve() / ".." / "valid-map.json"),
+                ],
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+                check=False,
+            )
+
+            self.assertEqual(oversized_result.returncode, 2, oversized_result.stderr)
+            self.assertIn("text_byte_limit_exceeded", oversized_result.stderr)
+            self.assertEqual(dotdot_result.returncode, 4, dotdot_result.stderr)
+            self.assertIn("cannot contain '..'", dotdot_result.stderr)
+            self.assertFalse((root / "oversized-output").exists())
+            self.assertFalse((root / "dotdot-output").exists())
+
+    def test_field_map_replacement_during_read_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            mapping = root / "field-map.json"
+            replacement = root / "replacement.json"
+            self.write_field_map(mapping, {})
+            self.write_field_map(replacement, {"external": "title"})
+            module_name = "prepare_account_package_replacement_test"
+            spec = importlib.util.spec_from_file_location(module_name, SCRIPT)
+            self.assertIsNotNone(spec)
+            self.assertIsNotNone(spec.loader if spec is not None else None)
+            assert spec is not None and spec.loader is not None
+            adapter = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = adapter
+            spec.loader.exec_module(adapter)
+            original_read = os.read
+            replaced = False
+
+            def replace_after_first_read(descriptor: int, size: int) -> bytes:
+                nonlocal replaced
+                data = original_read(descriptor, size)
+                if data and not replaced:
+                    replacement.replace(mapping)
+                    replaced = True
+                return data
+
+            try:
+                with mock.patch.object(adapter.os, "read", side_effect=replace_after_first_read):
+                    with self.assertRaisesRegex(adapter.OutputConflictError, "changed during read"):
+                        adapter.load_field_mapping(mapping)
+            finally:
+                sys.modules.pop(module_name, None)
+
+    def test_markdown_with_field_map_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            markdown = root / "markdown"
+            markdown.mkdir()
+            (markdown / "one.md").write_text("# Synthetic\n" + complete_content(1), encoding="utf-8")
+            mapping = root / "field-map.json"
+            self.write_field_map(mapping, {})
+
+            result = self.run_adapter(
+                markdown,
+                root / "output",
+                field_map=mapping,
+            )
+
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("only for CSV and JSON", result.stderr)
+            self.assertFalse((root / "output").exists())
+
+    def test_version_works_from_unrelated_cwd(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT.resolve()), "--version"],
+                cwd=temp,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(
+                result.stdout,
+                "xhs-creator-distill account-package adapter v0.4.0\n",
+            )
+            self.assertEqual(result.stderr, "")
 
     def test_markdown_directory_uses_stable_relative_order(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

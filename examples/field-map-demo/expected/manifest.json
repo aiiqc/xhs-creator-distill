@@ -10,15 +10,15 @@
     "engagement"
   ],
   "counts": {
-    "complete_text": 10,
-    "decoded_text_bytes": 2458,
-    "deep_analysis_candidates": 8,
-    "discovered": 11,
+    "complete_text": 5,
+    "decoded_text_bytes": 1571,
+    "deep_analysis_candidates": 4,
+    "discovered": 6,
     "duplicate": 1,
-    "independent_usable": 9,
-    "inventoried": 11,
+    "independent_usable": 4,
+    "inventoried": 6,
     "low_information": 1,
-    "parsed": 11,
+    "parsed": 6,
     "skipped": 0,
     "unprocessed": 0
   },
@@ -29,39 +29,35 @@
     },
     {
       "evidence_id": "N02",
-      "source_id": "S009"
+      "source_id": "S002"
     },
     {
       "evidence_id": "N03",
-      "source_id": "S008"
+      "source_id": "S003"
     },
     {
       "evidence_id": "N04",
       "source_id": "S004"
-    },
-    {
-      "evidence_id": "N05",
-      "source_id": "S003"
-    },
-    {
-      "evidence_id": "N06",
-      "source_id": "S002"
-    },
-    {
-      "evidence_id": "N07",
-      "source_id": "S007"
-    },
-    {
-      "evidence_id": "N08",
-      "source_id": "S005"
     }
   ],
   "field_mapping": {
-    "applied": false,
-    "ignored_fields": [],
-    "mapped_fields": {},
-    "schema_version": null,
-    "sha256": null
+    "applied": true,
+    "ignored_fields": [
+      "export_batch",
+      "source_url"
+    ],
+    "mapped_fields": {
+      "author_label": "creator",
+      "headline": "title",
+      "is_pinned": "pinned",
+      "kind": "content_type",
+      "like_count": "engagement",
+      "note_id": "id",
+      "publish_time": "published_at",
+      "text_body": "content"
+    },
+    "schema_version": "1.0",
+    "sha256": "d11ce235f8eee151fc162e9fbb0985eed708176da397b5494aec8a1c1fa0ba81"
   },
   "hold_reasons": [],
   "input_format": "csv",

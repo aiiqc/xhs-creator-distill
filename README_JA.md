@@ -37,8 +37,8 @@
 | モード | 入力 | デフォルト動作 | 適しているユーザー |
 | --- | --- | --- | --- |
 | `QUICK_SET` | 3〜8件の代表ノート | すべてを深く分析し、インターネットには接続しない | 速さ、精度、プライバシー管理を重視する人 |
-| `PUBLIC_SAMPLE` | 公開アカウントのURLまたは一意の識別子 | 閲覧可能な項目を最大60件まで棚卸し、層化抽出で最大8件を選んで深掘り分析 | 1つの指示で始めたい手軽さ重視のユーザー |
-| `ACCOUNT_PACKAGE` | アカウントのエクスポート、ファイル、ディレクトリ、または構造化コレクション | 先にパッケージ全体を棚卸し、その後3〜8件を選んで深く分析 | パッケージ単位の網羅性と検証可能な結論を求める人 |
+| `PUBLIC_SAMPLE` | 公開アカウントのURLまたは一意の識別子 | 閲覧可能な項目を最大60件まで棚卸し、最大8件を深掘り分析。アクセス制御で阻止される場合あり | まず公開読み取りを試したいユーザー |
+| `ACCOUNT_PACKAGE` | アカウントのエクスポート、ファイル、ディレクトリ、または構造化コレクション | プラットフォームへのログイン不要。全体を棚卸し後、3〜8件を深掘り分析 | 成功率の高いアカウント全体の主要経路、パッケージ単位の網羅性、検証可能な結論を求める人 |
 
 ### 「アカウント全体」に関する誠実な境界
 
@@ -46,6 +46,7 @@
 - ユーザーがエクスポートまたは資料パッケージを提供した場合に限り、**現在の資料パッケージの範囲内での全体棚卸**が可能です。
 - ユーザーが完全なエクスポートだと説明した場合でも、レポートには「プラットフォーム上の全データと照合して独立検証したものではない」と明記します。
 - 各アカウントレポートには、検出数、解析数、完全なテキストを取得できた数、深掘り分析数、停止理由、未カバー項目を表示します。
+- `ACCOUNT_PACKAGE` はプラットフォームへのログインが不要で、成功率を管理しやすいアカウント全体の主要経路です。「全体」はユーザーが提供した現在の資料パッケージ範囲だけを指します。
 
 ## 何を抽出するのか
 
@@ -77,17 +78,20 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills` を実際のディレクトリに置き換え、ホストの説明に従ってスキルを再読み込みしてください。
 
-### `v0.3.1` に固定
+### `v0.4.0` に固定
 
 今回レビュー済みのリリースを再現するには、tag を固定してクローンします。
 
 ```bash
-git clone --branch v0.3.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## クイックスタート
 
 ### 手軽なアカウント入力
+
+<!-- public-sample-access-boundary -->
+小紅書のWebサイトは、未ログインの読み取りをログインウォール、CAPTCHA、その他のアクセス制御で阻止する場合があります。これは想定された境界であり、Skill の障害ではありません。本プロジェクトはログインも回避も行いません。阻止された場合は、ログイン不要の `ACCOUNT_PACKAGE` 主要経路で自分のエクスポート/資料パッケージを使うか、3〜8件を `QUICK_SET` で提供してください。
 
 ```text
 $xhs-creator-distill の手軽モードを使って、
@@ -128,10 +132,12 @@ $xhs-creator-distill を使って、このタスクに添付したアカウン�
 
 ### 決定論的な資料パッケージアダプター
 
-`v0.3.0` には、Python 標準ライブラリだけを使ってローカルで動作する前処理ツールが含まれます（Python 3.10 以上が必要です）。規定の CSV、JSON、または Markdown ディレクトリを受け取り、明示的なリソース上限内で棚卸しと安定した根拠マッピングを作成してから、5階層分析用の素材を Skill に渡します。上限に達した場合は停止し、`READY` を返しません。
+`v0.3.0` で Python 標準ライブラリだけを使うローカル前処理ツールを導入し（Python 3.10 以上が必要です）、`v0.4.0` で厳格なフィールドマッピングとインストール後も安全な絶対パス呼び出しを追加しました。規定の CSV、JSON、または Markdown ディレクトリを受け取り、明示的なリソース上限内で棚卸しと安定した根拠マッピングを作成してから、5階層分析用の素材を Skill に渡します。上限に達した場合は停止し、`READY` を返しません。作業ディレクトリやインストール位置の違いによる誤解決を避けるため、まず Skill のルートを絶対パスで設定します。
 
 ```bash
-python3 scripts/prepare_account_package.py INPUT OUTPUT
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT
 ```
 
 出力ディレクトリには次のファイルが含まれます。
@@ -144,12 +150,38 @@ python3 scripts/prepare_account_package.py INPUT OUTPUT
 
 このアダプターは、ネットワーク接続、ログイン、アーカイブ展開、資料内コンテンツの実行、バイラル成果の予測を行いません。入力フィールド、終了状態、安全上限、再現ルールは[資料パッケージアダプター仕様](references/package-adapter.md)を参照してください。
 
+### 厳格なフィールドマッピング
+
+CSV/JSON のフィールド名が規定と異なる場合は、厳格な JSON マッピングを追加できます。フィールド名だけを変更し、解析、リソース上限、選定、安全ルールは変更しません。
+
+```json
+{
+  "schema_version": "1.0",
+  "map": {
+    "source_id": "id",
+    "author_name": "creator",
+    "text": "content",
+    "created_at": "published_at"
+  },
+  "ignored_fields": ["local_note"]
+}
+```
+
+```bash
+export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT \
+  --field-map /absolute/path/to/field-map.json
+```
+
+トップレベルで許可されるのは `schema_version`、`map`、`ignored_fields` だけです。規定外の全フィールドは明示的にマッピングまたは無視する必要があります。`map` のターゲットは8個の規定フィールドに限定され、`body` はターゲットにできず、未マッピング入力の互換エイリアスとしてのみ受け付けます。不明なキー/ターゲット、規定ソースフィールドのマッピング/無視、ターゲット重複、map/ignore の重複、実際の入力ターゲットとの衝突、無効な JSON は終了コード `2` で拒否され、成果物が生成されない場合があります。暗黙に推測しません。マッピング後も各レコードには `title` と、`content` または `body` のどちらか一方だけが必要です。manifest は正規化したマッピングの SHA-256 を記録し、同じ入力とマッピングの再現性を保証します。フィールド名は実際のエクスポートに合わせてください。本プロジェクトは特定の第三者収集ツールへの対応を表明せず、データ取得も行いません。完全な契約と汎用的な合成例は[インポートマッピング手順](references/import-recipes.md)を参照してください。
+
 ### 60秒の合成デモ
 
-[60秒の合成デモ](examples/account-package-demo/README.md) は完全に架空の CSV だけを使い、ログインは不要で、個人データも含みません。リポジトリのルートから、次の固定オフライン回帰テストを実行します。
+[60秒の合成デモ](examples/account-package-demo/README.md) と[マッピング付き合成デモ](examples/field-map-demo/README.md) は完全に架空の CSV だけを使い、ログインは不要で、個人データも含みません。リポジトリのルートから、次の固定オフライン回帰テストを実行します。
 
 ```bash
 python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
+python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_demo_matches_golden_outputs -v
 ```
 
 終了コード `0` が成功を示し、アダプターの manifest 状態は `READY` です。テストは新たに生成した `manifest.json`、`inventory.csv`、`evidence-map.csv`、`distill-input.md`、`30-day-content-plan.csv` を、リポジトリ内の5つのゴールデン出力とバイト単位で比較します。
@@ -203,15 +235,17 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_
 - [x] `v0.2.1`：分離された実世界セルフテスト、権利帰属、外部入口の失敗境界に関する証拠。
 - [x] `v0.3.0`：CSV、JSON、Markdown ディレクトリ向けの決定論的資料パッケージアダプター、根拠マッピング、30日計画骨格。
 - [x] `v0.3.1`：60秒の合成 CSV デモ、5つのゴールデン出力、数式/プロンプトインジェクション回帰、macOS/Windows 間のバイト一致性検証。
-- [ ] 実在する匿名化済みサンプルに基づいて、パスとプライバシーの安全性を低下させず、より多くのエクスポートフィールド対応を追加する。
+- [x] `v0.4.0`：厳格なフィールドマッピング、マッピング付きゴールデンデモ、クロスプラットフォーム回帰、公開読み取り失敗時の主要経路へのフォールバック案内。
+- [ ] 実在する匿名化済みサンプルに基づく汎用インポートレシピを拡充し、第三者ツールとの固定互換性は表明しない。
 - [ ] 匿名化された利用者からのフィードバックに基づき、サンプリングと根拠のプロトコルを改善する。
+- [ ] 5つの出力言語と完全版、焦点版、`HOLD` レポートに対応する構造検証ツールを構築する。構造合格は意味内容の真実性を証明しない。
 - [ ] 「抽出レポートから独立したスキルを生成する」オプションのワークフローを評価する。現バージョンでは提供しない。
 
 ロードマップはバージョンリリースを約束するものではありません。優先順位は検証結果とメンテナンスリソースに応じて変更されます。
 
 ## メンテナンス状況
 
-現在のバージョンは `v0.3.1` です。本プロジェクトは [Semantic Versioning](https://semver.org/) に従ってバージョンを管理し、変更内容を [CHANGELOG](CHANGELOG.md) に記載します。
+現在のバージョンは `v0.4.0` です。本プロジェクトは [Semantic Versioning](https://semver.org/) に従ってバージョンを管理し、変更内容を [CHANGELOG](CHANGELOG.md) に記載します。
 
 - 一般的な問題と提案：GitHub Issuesを使用してください。
 - コードとドキュメントの貢献：まず [CONTRIBUTING.md](CONTRIBUTING.md) をお読みください。

@@ -223,11 +223,11 @@
 
 ## 确定性预处理制品
 
-对受支持的 CSV、JSON 或 Markdown 目录运行 `python3 scripts/prepare_account_package.py INPUT OUTPUT` 时，阶段 0–2 必须得到并核对以下五个本地制品：
+先解析实际包含当前 `SKILL.md` 的绝对 Skill 根目录并设置 `XHS_SKILL_ROOT`。对受支持的 CSV、JSON 或 Markdown 目录运行 `python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT [--field-map MAP.json]` 时，阶段 0–2 必须得到并核对以下五个本地制品：
 
 | 制品 | 用途 | 不得声称 |
 | --- | --- | --- |
-| `manifest.json` | 记录输入类型、处理计数、限制、警告和制品清单 | 平台全量、语义质量或分析已通过 |
+| `manifest.json` | 以 schema `1.1` 记录输入类型、字段映射审计、处理计数、限制、警告和制品清单 | 平台全量、语义质量或分析已通过 |
 | `inventory.csv` | 记录资源上限内所有已处理条目、规范字段与处理状态；超限时另报未处理计数 | 每行都可深析或都是独立内容 |
 | `evidence-map.csv` | 给 3–8 篇候选建立 `Nxx → Sxxx` 映射和确定性选样理由 | 已经支持任何五层结论 |
 | `distill-input.md` | 汇总被选材料，作为阶段 3 起点的不可信分析输入 | 模型已经读懂、验证或认同其中内容 |

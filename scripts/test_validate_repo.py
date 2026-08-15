@@ -195,6 +195,108 @@ def main() -> int:
         "unsafe spreadsheet prefix in synthetic demo output",
         add_unsafe_evidence_formula,
     )
+
+    def add_extra_field_map_input(repository: Path) -> None:
+        path = repository / "examples/field-map-demo/input/unreviewed-export.json"
+        path.write_text('{"unexpected":true}\n', encoding="utf-8", newline="\n")
+
+    assert_fail(
+        "extra file in field-map demo input",
+        "must contain exactly posts-export.csv and field-map.json",
+        add_extra_field_map_input,
+    )
+
+    def change_field_map_spec(repository: Path) -> None:
+        path = repository / "examples/field-map-demo/input/field-map.json"
+        text = path.read_text(encoding="utf-8")
+        path.write_text(
+            text.replace('"schema_version": "1.0"', '"schema_version": "9.9"'),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "field-map demo spec differs from reviewed input",
+        "mapping file differs from the reviewed SHA-256",
+        change_field_map_spec,
+    )
+
+    def add_field_map_demo_credential(repository: Path) -> None:
+        path = repository / "examples/field-map-demo/input/posts-export.csv"
+        original = path.read_text(encoding="utf-8")
+        mutated = original.replace(
+            "完全虚构的映射测试正文",
+            "完全虚构的映射测试正文 FAKE_SECRET_ghp_0123456789abcdefghijklmn",
+            1,
+        )
+        if mutated == original:
+            raise AssertionError("field-map credential fixture mutation target is missing")
+        path.write_text(mutated, encoding="utf-8", newline="\n")
+
+    assert_fail(
+        "credential-shaped value in field-map demo",
+        "credential-shaped content in field-map demo",
+        add_field_map_demo_credential,
+    )
+
+    def add_unsafe_field_map_formula(repository: Path) -> None:
+        path = repository / "examples/field-map-demo/expected/evidence-map.csv"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("'+M003", "+M003"),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "unsafe spreadsheet prefix in field-map demo output",
+        "unsafe spreadsheet prefix in field-map demo output",
+        add_unsafe_field_map_formula,
+    )
+
+    def corrupt_field_mapping_audit(repository: Path) -> None:
+        path = repository / "examples/field-map-demo/expected/manifest.json"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace('"applied": true', '"applied": false', 1),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "field-map manifest audit mismatch",
+        "manifest mapping audit is inconsistent",
+        corrupt_field_mapping_audit,
+    )
+
+    def drift_readme_version(repository: Path) -> None:
+        path = repository / "README_EN.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("v0.4.0", "v0.4.9"),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "translated README version drift",
+        "README_EN.md is missing synchronized fragment: v0.4.0",
+        drift_readme_version,
+    )
+
+    def remove_body_target_boundary(repository: Path) -> None:
+        path = repository / "README_EN.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "`body` cannot be a map target",
+                "`body` is accepted by the adapter",
+            ),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "translated README body-target boundary drift",
+        "README_EN.md is missing synchronized safety boundary: `body` cannot be a map target",
+        remove_body_target_boundary,
+    )
     return 0
 
 
