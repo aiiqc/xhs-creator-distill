@@ -96,12 +96,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 將 `/path/to/your/skills` 替換為實際目錄，再依宿主說明重新載入 Skill。
 
-### 固定 `v0.4.2` 安裝
+### 固定 `v0.4.3` 安裝
 
 若要重現本次已審查的發佈版本，請鎖定 tag：
 
 ```bash
-git clone --branch v0.4.2 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.3 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 快速使用
@@ -285,6 +285,7 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 - [x] `v0.4.0`：嚴格欄位映射、帶映射黃金 Demo、跨平台回歸，以及公開讀取失敗的主路徑降級說明。
 - [x] `v0.4.1`：首屏成果預覽、三情境快速入口、PowerShell 路徑、端到端合成演練與 `HOLD` 範例。
 - [x] `v0.4.2`：修正 Windows PowerShell 在存在多個 `python` 命令候選時的確定性選擇，並納入 Windows CI 回歸。
+- [x] `v0.4.3`：固定 CLI 標準輸出與錯誤輸出為 UTF-8，修正 Windows 重新導向環境中的雙語說明編碼失敗。
 - [ ] 根據真實且去識別化的樣本擴充通用匯入配方，不宣稱固定相容第三方工具。
 - [ ] 根據去識別化的使用回饋，優化取樣與證據協定。
 - [ ] 建立涵蓋五種輸出語言及完整、聚焦、`HOLD` 報告的結構驗證器；結構通過不等於語意真實。
@@ -294,7 +295,7 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 
 ## 維護狀態
 
-當前版本為 `v0.4.2`。本版修正 Windows PowerShell 的 Python 命令選擇，不改變三種模式的證據、覆蓋與安全語意。專案依 [Semantic Versioning](https://semver.org/) 記錄版本，並在 [CHANGELOG](CHANGELOG.md) 中說明變更。
+當前版本為 `v0.4.3`。本版修正 Windows 重新導向環境中的雙語 CLI 輸出編碼，不改變三種模式的證據、覆蓋與安全語意。專案依 [Semantic Versioning](https://semver.org/) 記錄版本，並在 [CHANGELOG](CHANGELOG.md) 中說明變更。
 
 - 一般問題與建議：使用 GitHub Issues。
 - 程式碼與文件貢獻：請先閱讀 [CONTRIBUTING.md](CONTRIBUTING.md)。

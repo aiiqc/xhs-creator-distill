@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-08-20
+
+### Fixed
+
+- CLI 入口将可配置的 `stdout` 与 `stderr` 明确设为 UTF-8，避免 Windows 重定向输出采用 `cp1252` 时双语 `--help` 触发 `UnicodeEncodeError`；新增以 `PYTHONIOENCODING=cp1252` 重现该失败条件的离线回归。
+
 ## [0.4.2] - 2026-08-20
 
 ### Fixed
@@ -109,7 +115,8 @@
 - 输入安全、隐私、原创与诚实边界。
 - 合成示例、参考文档、基础评测与 GitHub 社区文件。
 
-[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.3
 [0.4.2]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.2
 [0.4.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.1
 [0.4.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.0

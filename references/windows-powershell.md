@@ -24,7 +24,7 @@ $Python = (
 ).Source
 ```
 
-`Get-Command` 可能同时找到真实 Python 与 Windows App Execution Alias，因此必须只选择 PATH 中的第一项，避免把多个路径拼成一个命令。`$SkillRoot`、`$Adapter` 和后续的输入路径都是已解析的字符串。命令使用 PowerShell 的直接参数传递，不使用 `Invoke-Expression`。
+`Get-Command` 可能同时找到真实 Python 与 Windows App Execution Alias，因此必须只选择 PATH 中的第一项，避免把多个路径拼成一个命令。适配器会在 CLI 入口把 `stdout` 与 `stderr` 明确配置为 UTF-8，确保重定向输出仍可显示双语帮助；不要求修改系统代码页。`$SkillRoot`、`$Adapter` 和后续的输入路径都是已解析的字符串。命令使用 PowerShell 的直接参数传递，不使用 `Invoke-Expression`。
 
 ## 2. 检查版本与命令帮助
 

@@ -13,7 +13,7 @@ from urllib.parse import unquote
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_VERSION = "v0.4.2"
+RELEASE_VERSION = "v0.4.3"
 DEMO_INPUT_SHA256 = "f96a97a4a5b0cd85df9aa7152b29f4ef0205e676a6c5d44d3472225977c8f825"
 FIELD_MAP_DEMO_INPUT_SHA256 = "4e5c06800b86a4d709df5f8e6e73b56cdba1be8d3683c75554baae48c26ed9b9"
 FIELD_MAP_DEMO_SPEC_SHA256 = "410bea03eb3fa1575216679672dfb255d0b9c6541d9a14dd5afc423cf5ae5d15"
@@ -610,6 +610,7 @@ def check_package_adapter_contract(errors: list[str]) -> None:
         "references/windows-powershell.md": (
             "PowerShell 7",
             "Select-Object -First 1",
+            "stdout` 与 `stderr` 明确配置为 UTF-8",
             "--help",
             "--version",
             "account-package-demo",
@@ -667,8 +668,14 @@ def check_package_adapter_contract(errors: list[str]) -> None:
         "scripts/test_prepare_account_package.py": (
             "examples\" / \"account-package-demo",
             "examples\" / \"field-map-demo",
+            "test_help_forces_utf8_when_environment_requests_cp1252",
             "test_repository_demo_matches_golden_outputs",
             "test_field_map_demo_matches_golden_outputs",
+        ),
+        "scripts/prepare_account_package.py": (
+            'ADAPTER_VERSION = "0.4.3"',
+            "def configure_cli_streams()",
+            'reconfigure(encoding="utf-8", errors="strict")',
         ),
         ".github/ISSUE_TEMPLATE/bug_report.yml": (
             f"placeholder: {RELEASE_VERSION} 或 commit SHA",

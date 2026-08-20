@@ -270,14 +270,14 @@ def main() -> int:
     def drift_readme_version(repository: Path) -> None:
         path = repository / "README_EN.md"
         path.write_text(
-            path.read_text(encoding="utf-8").replace("v0.4.2", "v0.4.9"),
+            path.read_text(encoding="utf-8").replace("v0.4.3", "v0.4.9"),
             encoding="utf-8",
             newline="\n",
         )
 
     assert_fail(
         "translated README version drift",
-        "README_EN.md is missing synchronized fragment: v0.4.2",
+        "README_EN.md is missing synchronized fragment: v0.4.3",
         drift_readme_version,
     )
 
@@ -390,7 +390,7 @@ def main() -> int:
         path = repository / "evals/cases/deterministic-package-adapter.md"
         path.write_text(
             path.read_text(encoding="utf-8").replace(
-                "xhs-creator-distill account-package adapter v0.4.2",
+                "xhs-creator-distill account-package adapter v0.4.3",
                 "xhs-creator-distill account-package adapter v0.4.0",
                 1,
             ),
@@ -401,7 +401,7 @@ def main() -> int:
     assert_fail(
         "deterministic eval adapter version drift",
         "evals/cases/deterministic-package-adapter.md is missing package-adapter contract: "
-        "xhs-creator-distill account-package adapter v0.4.2",
+        "xhs-creator-distill account-package adapter v0.4.3",
         drift_deterministic_eval_version,
     )
 

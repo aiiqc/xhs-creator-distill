@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 
-ADAPTER_VERSION = "0.4.2"
+ADAPTER_VERSION = "0.4.3"
 SCHEMA_VERSION = "1.1"
 FIELD_MAP_SCHEMA_VERSION = "1.0"
 SELECTION_PROTOCOL = "pinned-recent-engagement-type-source-order-v1"
@@ -106,6 +106,14 @@ class OutputConflictError(AdapterError):
     """Unsafe path, output conflict, or filesystem failure."""
 
     exit_code = 4
+
+
+def configure_cli_streams() -> None:
+    """Use UTF-8 for redirected CLI output on every supported platform."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="strict")
 
 
 @dataclass
@@ -1235,4 +1243,5 @@ def run(argv: Sequence[str]) -> int:
 
 
 if __name__ == "__main__":
+    configure_cli_streams()
     raise SystemExit(run(sys.argv))

@@ -96,12 +96,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 Replace `/path/to/your/skills` with the actual directory, then reload the Skill according to the host’s instructions.
 
-### Pin `v0.4.2`
+### Pin `v0.4.3`
 
 To reproduce this reviewed release, clone the exact tag:
 
 ```bash
-git clone --branch v0.4.2 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.3 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## Quick start
@@ -289,6 +289,7 @@ The [MIT License](LICENSE) covers only content that this repository’s authors 
 - [x] `v0.4.0`: strict field mapping, a mapped golden demo, cross-platform regressions, and primary-path fallback guidance when public reading fails.
 - [x] `v0.4.1`: an outcome-first preview, a three-situation quick start, a PowerShell path, an end-to-end synthetic walkthrough, and a `HOLD` example.
 - [x] `v0.4.2`: deterministic Python command selection when Windows PowerShell finds multiple `python` candidates, covered by a Windows CI regression check.
+- [x] `v0.4.3`: UTF-8 CLI standard output and error streams, fixing bilingual help under redirected Windows output.
 - [ ] Expand generic import recipes from real, de-identified samples without claiming fixed compatibility with third-party tools.
 - [ ] Improve the sampling and evidence protocols based on de-identified usage feedback.
 - [ ] Build a structural validator for five output languages and full, focused, and `HOLD` reports; structural success does not prove semantic truth.
@@ -298,7 +299,7 @@ The roadmap is not a version commitment. Priorities may change based on validati
 
 ## Maintenance status
 
-The current version is `v0.4.2`. This release fixes Python command selection in Windows PowerShell without changing the evidence, coverage, or safety semantics of the three modes. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
+The current version is `v0.4.3`. This release fixes bilingual CLI output encoding under redirected Windows output without changing the evidence, coverage, or safety semantics of the three modes. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
 
 - General questions and suggestions: use GitHub Issues.
 - Code and documentation contributions: read [CONTRIBUTING.md](CONTRIBUTING.md) first.

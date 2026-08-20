@@ -781,7 +781,7 @@ class AdapterTestCase(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(
                 result.stdout,
-                "xhs-creator-distill account-package adapter v0.4.2\n",
+                "xhs-creator-distill account-package adapter v0.4.3\n",
             )
             self.assertEqual(result.stderr, "")
 
@@ -813,6 +813,26 @@ class AdapterTestCase(unittest.TestCase):
                         result.stdout,
                     )
                     self.assertIn("references/import-recipes.md", result.stdout)
+
+    def test_help_forces_utf8_when_environment_requests_cp1252(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            environment = os.environ.copy()
+            environment["PYTHONIOENCODING"] = "cp1252"
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT.resolve()), "--help"],
+                cwd=temp,
+                env=environment,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8"))
+            self.assertEqual(result.stderr, b"")
+            help_text = result.stdout.decode("utf-8")
+            self.assertIn("Usage / 用法:", help_text)
+            self.assertIn("Canonical input example / 规范输入示例:", help_text)
 
     def test_markdown_directory_uses_stable_relative_order(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
