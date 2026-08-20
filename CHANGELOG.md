@@ -6,6 +6,12 @@
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-08-20
+
+### Fixed
+
+- Windows PowerShell 在 PATH 中存在多个 `python` 应用候选时只选择第一项，避免把多个 `.Source` 路径拼成一个无效命令；同一规则同时锁入使用指南、仓库 validator 与 Windows GitHub Actions。
+
 ## [0.4.1] - 2026-08-20
 
 ### Added
@@ -103,7 +109,8 @@
 - 输入安全、隐私、原创与诚实边界。
 - 合成示例、参考文档、基础评测与 GitHub 社区文件。
 
-[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.2
 [0.4.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.1
 [0.4.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.0
 [0.3.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.3.1

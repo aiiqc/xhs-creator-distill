@@ -96,12 +96,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 将 `/path/to/your/skills` 替换为真实目录，再按宿主说明重新加载 Skill。
 
-### 固定 `v0.4.1` 安装
+### 固定 `v0.4.2` 安装
 
 需要重现本次已审查发布版时，请锁定 tag：
 
 ```bash
-git clone --branch v0.4.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.2 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 快速使用
@@ -284,6 +284,7 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 - [x] `v0.3.1`：60 秒合成 CSV Demo、五项黄金输出、公式/提示注入回归和 macOS/Windows 字节一致性验证。
 - [x] `v0.4.0`：严格字段映射、带映射黄金 Demo、跨平台回归，以及公开读取失败的主路径降级说明。
 - [x] `v0.4.1`：首屏成果预览、三情境快速入口、PowerShell 路径、端到端合成演练与 `HOLD` 示例。
+- [x] `v0.4.2`：修正 Windows PowerShell 在存在多个 `python` 命令候选时的确定性选择，并纳入 Windows CI 回归。
 - [ ] 根据真实、去标识化样本扩充通用导入配方，不宣称固定兼容第三方工具。
 - [ ] 根据去标识化使用反馈优化取样和证据协议。
 - [ ] 建立覆盖五种输出语言及完整、聚焦、`HOLD` 报告的结构验证器；结构通过不等于语义真实。
@@ -293,7 +294,7 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 
 ## 维护状态
 
-当前版本为 `v0.4.1`。本版主要降低首次使用门槛，不改变三种模式的证据、覆盖与安全语义。项目按 [Semantic Versioning](https://semver.org/) 记录版本，并在 [CHANGELOG](CHANGELOG.md) 中说明变更。
+当前版本为 `v0.4.2`。本版修正 Windows PowerShell 的 Python 命令选择，不改变三种模式的证据、覆盖与安全语义。项目按 [Semantic Versioning](https://semver.org/) 记录版本，并在 [CHANGELOG](CHANGELOG.md) 中说明变更。
 
 - 一般问题与建议：使用 GitHub Issues。
 - 代码与文档贡献：先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。

@@ -96,12 +96,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills` を実際のディレクトリに置き換え、ホストの説明に従ってスキルを再読み込みしてください。
 
-### `v0.4.1` に固定
+### `v0.4.2` に固定
 
 今回レビュー済みのリリースを再現するには、tag を固定してクローンします。
 
 ```bash
-git clone --branch v0.4.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.2 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## クイックスタート
@@ -284,6 +284,7 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 - [x] `v0.3.1`：60秒の合成 CSV デモ、5つのゴールデン出力、数式/プロンプトインジェクション回帰、macOS/Windows 間のバイト一致性検証。
 - [x] `v0.4.0`：厳格なフィールドマッピング、マッピング付きゴールデンデモ、クロスプラットフォーム回帰、公開読み取り失敗時の主要経路へのフォールバック案内。
 - [x] `v0.4.1`：成果を先に示すプレビュー、3つの状況別クイックスタート、PowerShell 手順、エンドツーエンド合成ウォークスルー、`HOLD` 例。
+- [x] `v0.4.2`：Windows PowerShell が複数の `python` 候補を検出した場合の決定的なコマンド選択を修正し、Windows CI の回帰テストに追加。
 - [ ] 実在する匿名化済みサンプルに基づく汎用インポートレシピを拡充し、第三者ツールとの固定互換性は表明しない。
 - [ ] 匿名化された利用者からのフィードバックに基づき、サンプリングと根拠のプロトコルを改善する。
 - [ ] 5つの出力言語と完全版、焦点版、`HOLD` レポートに対応する構造検証ツールを構築する。構造合格は意味内容の真実性を証明しない。
@@ -293,7 +294,7 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 
 ## メンテナンス状況
 
-現在のバージョンは `v0.4.1` です。このリリースは、3つのモードの根拠、カバレッジ、安全性の意味を変えずに、初回利用の障壁を下げます。本プロジェクトは [Semantic Versioning](https://semver.org/) に従ってバージョンを管理し、変更内容を [CHANGELOG](CHANGELOG.md) に記載します。
+現在のバージョンは `v0.4.2` です。このリリースは、3つのモードの根拠、カバレッジ、安全性の意味を変えずに、Windows PowerShell の Python コマンド選択を修正します。本プロジェクトは [Semantic Versioning](https://semver.org/) に従ってバージョンを管理し、変更内容を [CHANGELOG](CHANGELOG.md) に記載します。
 
 - 一般的な問題と提案：GitHub Issuesを使用してください。
 - コードとドキュメントの貢献：まず [CONTRIBUTING.md](CONTRIBUTING.md) をお読みください。

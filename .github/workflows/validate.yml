@@ -87,7 +87,10 @@ jobs:
             throw "prepare_account_package.py was not found at the selected root."
           }
 
-          $Python = (Get-Command -Name "python" -CommandType Application -ErrorAction Stop).Source
+          $Python = (
+            Get-Command -Name "python" -CommandType Application -ErrorAction Stop |
+              Select-Object -First 1
+          ).Source
           & "$Python" "$Adapter" --version
           if ($LASTEXITCODE -ne 0) { throw "Adapter version check failed with exit code $LASTEXITCODE." }
           & "$Python" "$Adapter" --help

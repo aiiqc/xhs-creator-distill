@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 
-ADAPTER_VERSION = "0.4.1"
+ADAPTER_VERSION = "0.4.2"
 SCHEMA_VERSION = "1.1"
 FIELD_MAP_SCHEMA_VERSION = "1.0"
 SELECTION_PROTOCOL = "pinned-recent-engagement-type-source-order-v1"

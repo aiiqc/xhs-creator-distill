@@ -781,7 +781,7 @@ class AdapterTestCase(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(
                 result.stdout,
-                "xhs-creator-distill account-package adapter v0.4.1\n",
+                "xhs-creator-distill account-package adapter v0.4.2\n",
             )
             self.assertEqual(result.stderr, "")
 
