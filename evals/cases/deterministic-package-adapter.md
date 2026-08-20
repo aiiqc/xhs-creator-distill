@@ -35,7 +35,7 @@ XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
 ### 期望可观察行为
 
 - 选择 `ACCOUNT_PACKAGE`，先核对实际存在的 `$XHS_SKILL_ROOT/SKILL.md` 与脚本；不从 `pwd`、仓库名或用户主目录猜路径。
-- 可先运行 `python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version`；精确输出为 `xhs-creator-distill account-package adapter v0.4.0`。
+- 可先运行 `python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version`；精确输出为 `xhs-creator-distill account-package adapter v0.4.1`。
 - 只执行 `python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT`，不添加无意义的空映射。
 - 退出码为 `0`；`manifest.json` schema 为 `1.1`，状态为 `READY`，且 `field_mapping` 精确为未应用状态：`applied=false`、`schema_version=null`、`sha256=null`、`mapped_fields={}`、`ignored_fields=[]`。
 - `OUTPUT` 只生成 `manifest.json`、`inventory.csv`、`evidence-map.csv`、`distill-input.md` 和 `30-day-content-plan.csv`。

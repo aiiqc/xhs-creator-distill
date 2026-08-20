@@ -13,7 +13,7 @@ from urllib.parse import unquote
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RELEASE_VERSION = "v0.4.0"
+RELEASE_VERSION = "v0.4.1"
 DEMO_INPUT_SHA256 = "f96a97a4a5b0cd85df9aa7152b29f4ef0205e676a6c5d44d3472225977c8f825"
 FIELD_MAP_DEMO_INPUT_SHA256 = "4e5c06800b86a4d709df5f8e6e73b56cdba1be8d3683c75554baae48c26ed9b9"
 FIELD_MAP_DEMO_SPEC_SHA256 = "410bea03eb3fa1575216679672dfb255d0b9c6541d9a14dd5afc423cf5ae5d15"
@@ -25,6 +25,30 @@ DEMO_ARTIFACTS = (
     "evidence-map.csv",
     "distill-input.md",
     "30-day-content-plan.csv",
+)
+
+FILLED_PLAN_FIELDS = (
+    "day",
+    "status",
+    "topic",
+    "title_angle",
+    "audience_need",
+    "evidence_ids",
+    "format",
+    "call_to_action",
+    "validation_signal",
+    "notes",
+)
+
+ACCOUNT_REPORT_MAPPINGS = (
+    ("N01", "S001"),
+    ("N02", "S009"),
+    ("N03", "S008"),
+    ("N04", "S004"),
+    ("N05", "S003"),
+    ("N06", "S002"),
+    ("N07", "S007"),
+    ("N08", "S005"),
 )
 
 CREDENTIAL_SHAPED_PATTERN = re.compile(
@@ -70,10 +94,15 @@ REQUIRED_FILES = (
     "references/account-modes.md",
     "references/package-adapter.md",
     "references/import-recipes.md",
+    "references/windows-powershell.md",
     "references/distill-framework.md",
     "references/adaptation-guide.md",
     "references/output-contract.md",
     "examples/sample-distill-report.md",
+    "examples/sample-hold-report.md",
+    "examples/sample-account-package-report.md",
+    "examples/sample-filled-plan.csv",
+    "examples/account-package-walkthrough.md",
     "examples/account-package-demo/README.md",
     "examples/account-package-demo/input/posts.csv",
     "examples/account-package-demo/expected/manifest.json",
@@ -105,6 +134,8 @@ REQUIRED_FILES = (
     "evals/cases/deterministic-package-adapter.md",
     "evals/cases/unsafe-archive-package.md",
     "evals/cases/multilingual-output.md",
+    "evals/cases/human-quickstart-prompts.md",
+    "evals/results/short-prompt-codex-v0.4.1.md",
     "validation/real-world/README.md",
     "validation/real-world/THIRD_PARTY_NOTICES.md",
     "validation/real-world/access-boundaries-v0.2.1.md",
@@ -431,6 +462,14 @@ def check_readme_sync(errors: list[str]) -> None:
         "30-day-content-plan.csv",
         "(examples/account-package-demo/README.md)",
         "(examples/field-map-demo/README.md)",
+        "(examples/account-package-walkthrough.md)",
+        "(examples/sample-account-package-report.md)",
+        "(examples/sample-hold-report.md)",
+        "(references/windows-powershell.md)",
+        "<!-- human-outcome-preview-start -->",
+        "<!-- human-outcome-preview-end -->",
+        "<!-- human-quickstart-start -->",
+        "<!-- human-quickstart-end -->",
         "AdapterTestCase.test_repository_demo_matches_golden_outputs",
         "AdapterTestCase.test_field_map_demo_matches_golden_outputs",
         "60",
@@ -442,6 +481,7 @@ def check_readme_sync(errors: list[str]) -> None:
             "不得声称全量",
             "未向平台独立验证",
             "`body` 不能作为映射目标",
+            "实际加载的 `SKILL.md` 路径",
         ),
         "README_ZH-TW.md": (
             "不登入",
@@ -449,6 +489,7 @@ def check_readme_sync(errors: list[str]) -> None:
             "不得宣稱為全量",
             "未向平台獨立驗證",
             "`body` 不能作為映射目標",
+            "實際載入的 `SKILL.md` 路徑",
         ),
         "README_EN.md": (
             "does not log in",
@@ -456,6 +497,7 @@ def check_readme_sync(errors: list[str]) -> None:
             "must not be presented as complete coverage",
             "not independently verified against the platform",
             "`body` cannot be a map target",
+            "actually loaded `SKILL.md` path",
         ),
         "README_JA.md": (
             "ログイン",
@@ -463,6 +505,7 @@ def check_readme_sync(errors: list[str]) -> None:
             "全件を対象にしたとは表現できません",
             "全データと照合して独立検証",
             "`body` はターゲットにできず",
+            "実際に読み込まれた `SKILL.md` のパス",
         ),
         "README_KO.md": (
             "로그인",
@@ -470,6 +513,7 @@ def check_readme_sync(errors: list[str]) -> None:
             "전체 데이터를 다루었다고 주장해서는 안 됩니다",
             "실제 전체 데이터와 대조해",
             "`body`는 매핑 대상이 될 수 없고",
+            "실제로 로드된 `SKILL.md` 경로",
         ),
     }
     canonical = read_text(ROOT / "README.md", errors)
@@ -492,6 +536,14 @@ def check_readme_sync(errors: list[str]) -> None:
         for fragment in required_fragments:
             if fragment not in text:
                 add_error(errors, f"{relative} is missing synchronized fragment: {fragment}")
+        for marker in (
+            "<!-- human-outcome-preview-start -->",
+            "<!-- human-outcome-preview-end -->",
+            "<!-- human-quickstart-start -->",
+            "<!-- human-quickstart-end -->",
+        ):
+            if text.count(marker) != 1:
+                add_error(errors, f"{relative} must contain exactly one synchronized marker: {marker}")
         for fragment in safety_fragments[relative]:
             if fragment not in text:
                 add_error(errors, f"{relative} is missing synchronized safety boundary: {fragment}")
@@ -523,6 +575,8 @@ def check_package_adapter_contract(errors: list[str]) -> None:
             "--field-map",
             "field_mapping",
             "30-day-content-plan.csv",
+            "公式前缀",
+            "准确目标路径",
         ),
         "references/package-adapter.md": (
             "READY",
@@ -537,12 +591,29 @@ def check_package_adapter_contract(errors: list[str]) -> None:
             "schema 固定为 `1.1`",
             "ignored_fields",
             "drop_unmapped",
+            "公式前缀",
+            "准确目标路径",
         ),
         "references/import-recipes.md": (
             "XHS_SKILL_ROOT",
             "--field-map",
             "ignored_fields",
             "不代表、兼容或背书",
+            "windows-powershell.md",
+        ),
+        "references/output-contract.md": (
+            "DRAFT_EVIDENCE_LINKED",
+            "当前回复中以 CSV 代码块交付",
+            "公式前缀防护",
+            "准确的目标路径",
+        ),
+        "references/windows-powershell.md": (
+            "PowerShell 7",
+            "--help",
+            "--version",
+            "account-package-demo",
+            "field-map-demo",
+            "READY: wrote 5 artifacts",
         ),
         "evals/cases/deterministic-package-adapter.md": (
             "READY",
@@ -550,6 +621,16 @@ def check_package_adapter_contract(errors: list[str]) -> None:
             "DRAFT_REQUIRES_DISTILLATION",
             "字节级一致",
             "--field-map",
+            f"xhs-creator-distill account-package adapter {RELEASE_VERSION}",
+        ),
+        "evals/cases/human-quickstart-prompts.md": (
+            "DRAFT_EVIDENCE_LINKED",
+            "'=SUM(1,1)",
+            "不写入适配器 `OUTPUT`",
+        ),
+        "evals/rubric.md": (
+            "公式前缀",
+            "准确目标路径",
         ),
         ".github/workflows/validate.yml": (
             "python3 scripts/test_prepare_account_package.py",
@@ -564,6 +645,7 @@ def check_package_adapter_contract(errors: list[str]) -> None:
         "examples/account-package-demo/README.md": (
             "SYNTHETIC_DEMO",
             "examples/account-package-demo/input/posts.csv",
+            "references/windows-powershell.md",
             "AdapterTestCase.test_repository_demo_matches_golden_outputs",
             "不是外部采用证据",
         ),
@@ -571,14 +653,23 @@ def check_package_adapter_contract(errors: list[str]) -> None:
             "SYNTHETIC_FIELD_MAP_DEMO",
             "examples/field-map-demo/input/posts-export.csv",
             "examples/field-map-demo/input/field-map.json",
+            "references/windows-powershell.md",
             "AdapterTestCase.test_field_map_demo_matches_golden_outputs",
             "does not claim compatibility",
+        ),
+        "examples/account-package-walkthrough.md": (
+            "当前回复中以 CSV 代码块交付",
+            "公式前缀",
+            "准确目标路径",
         ),
         "scripts/test_prepare_account_package.py": (
             "examples\" / \"account-package-demo",
             "examples\" / \"field-map-demo",
             "test_repository_demo_matches_golden_outputs",
             "test_field_map_demo_matches_golden_outputs",
+        ),
+        ".github/ISSUE_TEMPLATE/bug_report.yml": (
+            f"placeholder: {RELEASE_VERSION} 或 commit SHA",
         ),
     }
     for relative, fragments in required_fragments.items():
@@ -598,7 +689,7 @@ def check_synthetic_examples(errors: list[str]) -> None:
     phone_pattern = re.compile(r"(?<!\d)(?:\+?86[- ]?)?1[3-9]\d{9}(?!\d)")
     url_pattern = re.compile(r"(?:https?://[^\s`)>\]]+|www\.[^\s`)>\]]+)", re.IGNORECASE)
     account_pattern = re.compile(r"(?:小红书号|账号\s*(?:ID|名称)?|用户\s*ID)\s*[:：]\s*\S+", re.IGNORECASE)
-    targets = [ROOT / "examples", ROOT / "evals/cases"]
+    targets = [ROOT / "examples", ROOT / "evals/cases", ROOT / "evals/results"]
     patterns = (
         ("email address", email_pattern),
         ("mobile number", phone_pattern),
@@ -609,6 +700,7 @@ def check_synthetic_examples(errors: list[str]) -> None:
         candidates = list(directory.rglob("*.md"))
         if directory.name == "examples":
             candidates.append(ROOT / "examples/account-package-demo/input/posts.csv")
+            candidates.append(ROOT / "examples/sample-filled-plan.csv")
             candidates.extend(
                 (
                     ROOT / "examples/field-map-demo/input/posts-export.csv",
@@ -624,6 +716,14 @@ def check_synthetic_examples(errors: list[str]) -> None:
             text = read_text(path, errors)
             if text is None:
                 continue
+            credential_match = CREDENTIAL_SHAPED_PATTERN.search(text)
+            if credential_match:
+                line = text.count("\n", 0, credential_match.start()) + 1
+                add_error(
+                    errors,
+                    f"credential-shaped content in synthetic data: "
+                    f"{path.relative_to(ROOT)}:{line}",
+                )
             for label, pattern in patterns:
                 match = pattern.search(text)
                 if match:
@@ -779,6 +879,10 @@ def check_demo_fixture(errors: list[str]) -> None:
     for key, value in expected_counts.items():
         if counts.get(key) != value:
             add_error(errors, f"synthetic demo manifest count mismatch: {key}")
+    demo_readme = read_text(directory / "README.md", errors)
+    expected_candidate_claim = f"映射 {expected_counts['deep_analysis_candidates']} 篇深析候选"
+    if demo_readme is not None and expected_candidate_claim not in demo_readme:
+        add_error(errors, "synthetic demo README candidate count differs from manifest")
 
     inventory = read_text(expected / "inventory.csv", errors)
     distill_input = read_text(expected / "distill-input.md", errors)
@@ -971,6 +1075,10 @@ def check_field_map_demo_fixture(errors: list[str]) -> None:
         for key, value in expected_counts.items():
             if counts.get(key) != value:
                 add_error(errors, f"field-map demo manifest count mismatch: {key}")
+    demo_readme = read_text(directory / "README.md", errors)
+    expected_candidate_claim = f"映射后的 {expected_counts['deep_analysis_candidates']} 篇合成候选"
+    if demo_readme is not None and expected_candidate_claim not in demo_readme:
+        add_error(errors, "field-map demo README candidate count differs from manifest")
 
     inventory = read_text(expected / "inventory.csv", errors)
     expected_text = "\n".join(
@@ -999,6 +1107,203 @@ def check_field_map_demo_fixture(errors: list[str]) -> None:
                         f"unsafe spreadsheet prefix in field-map demo output: "
                         f"{name}:{row_index}:{column_index}",
                     )
+
+
+def check_human_examples(errors: list[str]) -> None:
+    hold_path = ROOT / "examples/sample-hold-report.md"
+    hold_text = read_text(hold_path, errors) if hold_path.is_file() else None
+    if hold_text is not None:
+        required_hold_fragments = (
+            "SYNTHETIC_HOLD_EXAMPLE",
+            "状态：HOLD",
+            "输入模式：QUICK_SET",
+            "## 输入审计",
+            "## 阻塞原因",
+            "## 需要用户补充或更改的内容",
+            "## 可做的有限观察",
+        )
+        for fragment in required_hold_fragments:
+            if fragment not in hold_text:
+                add_error(errors, f"HOLD example is missing required structure: {fragment}")
+        forbidden_hold_headings = (
+            "## 执行摘要",
+            "## 一、定位层",
+            "## 二、选题层",
+            "## 三、结构层",
+            "## 四、表达层",
+            "## 五、运营层",
+        )
+        if any(heading in hold_text for heading in forbidden_hold_headings):
+            add_error(errors, "HOLD example must not contain execution summary or five-layer report")
+        ordered_hold_headings = (
+            "## 输入审计",
+            "## 阻塞原因",
+            "## 需要用户补充或更改的内容",
+            "## 可做的有限观察",
+        )
+        positions = [hold_text.find(heading) for heading in ordered_hold_headings]
+        if all(position >= 0 for position in positions) and positions != sorted(positions):
+            add_error(errors, "HOLD example sections are out of contract order")
+
+    full_report_paths = (
+        ROOT / "examples/sample-distill-report.md",
+        ROOT / "examples/sample-account-package-report.md",
+    )
+    layer_headings = (
+        "## 一、定位层",
+        "## 二、选题层",
+        "## 三、结构层",
+        "## 四、表达层",
+        "## 五、运营层",
+    )
+    for path in full_report_paths:
+        if not path.is_file():
+            continue
+        text = read_text(path, errors)
+        if text is None:
+            continue
+        ordered_headings = ("## 输入审计", "## 执行摘要", *layer_headings)
+        positions = [text.find(heading) for heading in ordered_headings]
+        if any(position < 0 for position in positions):
+            add_error(errors, f"{path.relative_to(ROOT)} is missing PASS report structure")
+        elif positions != sorted(positions):
+            add_error(errors, f"{path.relative_to(ROOT)} PASS report sections are out of contract order")
+
+        summary_start = text.find("## 执行摘要")
+        first_layer = text.find(layer_headings[0])
+        if 0 <= summary_start < first_layer:
+            summary_lines = text[summary_start:first_layer].splitlines()
+            summary_rows = [
+                line
+                for line in summary_lines
+                if line.startswith("|")
+                and not re.match(r"^\|\s*(?:模式|---)", line)
+            ]
+            if not 3 <= len(summary_rows) <= 6:
+                add_error(
+                    errors,
+                    f"{path.relative_to(ROOT)} execution summary must contain 3–6 data rows",
+                )
+            for row_number, line in enumerate(summary_rows, start=1):
+                cells = [cell.strip() for cell in line.strip("|").split("|")]
+                if len(cells) != 5:
+                    add_error(
+                        errors,
+                        f"{path.relative_to(ROOT)} execution summary row {row_number} "
+                        "must contain exactly five fields",
+                    )
+                    continue
+                if not re.search(r"\bN\d{2}\b", cells[2]):
+                    add_error(
+                        errors,
+                        f"{path.relative_to(ROOT)} execution summary row {row_number} "
+                        "is missing Nxx evidence",
+                    )
+                if cells[3] not in {"高", "中", "低"}:
+                    add_error(
+                        errors,
+                        f"{path.relative_to(ROOT)} execution summary row {row_number} "
+                        "uses an unsupported confidence label",
+                    )
+
+    account_report_path = ROOT / "examples/sample-account-package-report.md"
+    account_report = read_text(account_report_path, errors) if account_report_path.is_file() else None
+    if account_report is not None:
+        for fragment in (
+            "SYNTHETIC_ACCOUNT_PACKAGE_REPORT",
+            "状态：PASS",
+            "输入模式：ACCOUNT_PACKAGE",
+            "DRAFT_EVIDENCE_LINKED",
+        ):
+            if fragment not in account_report:
+                add_error(errors, f"account-package report is missing required contract: {fragment}")
+        for evidence_id, source_id in ACCOUNT_REPORT_MAPPINGS:
+            mapping_row = f"| `{evidence_id}` | `{source_id}` |"
+            if mapping_row not in account_report:
+                add_error(
+                    errors,
+                    f"account-package report mapping is inconsistent: {evidence_id} -> {source_id}",
+                )
+        defined_evidence = {evidence_id for evidence_id, _ in ACCOUNT_REPORT_MAPPINGS}
+        used_evidence = set(re.findall(r"\bN\d{2}\b", account_report))
+        if not used_evidence.issubset(defined_evidence):
+            unknown = ", ".join(sorted(used_evidence - defined_evidence))
+            add_error(errors, f"account-package report uses undefined evidence IDs: {unknown}")
+
+    plan_path = ROOT / "examples/sample-filled-plan.csv"
+    if plan_path.is_file():
+        try:
+            with plan_path.open(encoding="utf-8", newline="") as handle:
+                reader = csv.DictReader(handle)
+                plan_rows = list(reader)
+        except (OSError, UnicodeError, csv.Error) as exc:
+            add_error(errors, f"cannot parse filled plan example: {exc}")
+        else:
+            if reader.fieldnames != list(FILLED_PLAN_FIELDS):
+                add_error(errors, "filled plan example must use the fixed plan field order")
+            if len(plan_rows) != 7:
+                add_error(errors, "filled plan example must contain exactly 7 data rows")
+            allowed_evidence = {evidence_id for evidence_id, _ in ACCOUNT_REPORT_MAPPINGS}
+            for row_number, row in enumerate(plan_rows, start=1):
+                if (
+                    None in row
+                    or set(row) != set(FILLED_PLAN_FIELDS)
+                    or any(not isinstance(value, str) for value in row.values())
+                ):
+                    add_error(errors, f"filled plan example has malformed columns at row {row_number}")
+                    continue
+                if row.get("day") != str(row_number):
+                    add_error(errors, f"filled plan example day sequence mismatch at row {row_number}")
+                if row.get("status") != "DRAFT_EVIDENCE_LINKED":
+                    add_error(errors, f"filled plan example status mismatch at row {row_number}")
+                evidence_ids = {
+                    item.strip()
+                    for item in (row.get("evidence_ids") or "").split(",")
+                    if item.strip()
+                }
+                if not evidence_ids:
+                    add_error(errors, f"filled plan example evidence_ids must be nonempty at row {row_number}")
+                elif not evidence_ids.issubset(allowed_evidence):
+                    add_error(errors, f"filled plan example uses undefined evidence ID at row {row_number}")
+                notes = row.get("notes") or ""
+                if "USER_FACT:" not in notes or "INFERENCE:" not in notes:
+                    add_error(errors, f"filled plan example notes contract mismatch at row {row_number}")
+                for field, cell in row.items():
+                    if cell.lstrip().startswith(("=", "+", "-", "@")):
+                        add_error(
+                            errors,
+                            f"unsafe spreadsheet prefix in filled plan example: {row_number}:{field}",
+                        )
+
+    walkthrough_path = ROOT / "examples/account-package-walkthrough.md"
+    walkthrough = read_text(walkthrough_path, errors) if walkthrough_path.is_file() else None
+    if walkthrough is not None:
+        for fragment in (
+            "SYNTHETIC_ACCOUNT_PACKAGE_WALKTHROUGH",
+            "(sample-account-package-report.md)",
+            "(sample-filled-plan.csv)",
+            "READY",
+            "PASS",
+            "DRAFT_EVIDENCE_LINKED",
+            "不是适配器的第六项制品",
+        ):
+            if fragment not in walkthrough:
+                add_error(errors, f"account-package walkthrough is missing contract: {fragment}")
+
+    smoke_path = ROOT / "evals/results/short-prompt-codex-v0.4.1.md"
+    smoke_text = read_text(smoke_path, errors) if smoke_path.is_file() else None
+    if smoke_text is not None:
+        for fragment in (
+            "MAINTAINER_SELF_TEST + SYNTHETIC_ONLY + HOST_SMOKE",
+            "Codex Desktop",
+            "Skill 发现 | `NOT EVALUATED`",
+            "结果 | `PASS`",
+            "`QUICK_SET`",
+            "`N01`–`N03`",
+            "不是独立外部用户采用",
+        ):
+            if fragment not in smoke_text:
+                add_error(errors, f"short-prompt host smoke record is missing boundary: {fragment}")
 
 
 def check_real_world_validation(errors: list[str]) -> None:
@@ -1114,6 +1419,7 @@ def main() -> int:
     check_synthetic_examples(errors)
     check_demo_fixture(errors)
     check_field_map_demo_fixture(errors)
+    check_human_examples(errors)
     check_real_world_validation(errors)
 
     if errors:

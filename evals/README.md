@@ -2,7 +2,7 @@
 
 本目录用于对 `xhs-creator-distill` 做可重复的前向评测。`evals/cases/` 中所有案例均为虚构合成数据，不对应任何真实创作者、账号或已发布内容。
 
-已执行的受限真实世界自测与合成案例隔离存放在 [`validation/real-world/`](../validation/real-world/)。这些记录不会由 CI 联网重跑，也不能自动视为外部采用或小红书正向 E2E。
+已执行的受限真实世界自测与合成案例隔离存放在 [`validation/real-world/`](../validation/real-world/)。合成宿主烟雾结果单独存放在 [`evals/results/`](results/)。这些记录不会由 CI 联网重跑，也不能自动视为外部采用、宿主发现或小红书正向 E2E。
 
 ## 使用方法
 
@@ -23,6 +23,7 @@
 - `PUBLIC_SAMPLE` 同名公开候选无法唯一定位时的停止
 - `ACCOUNT_PACKAGE` 超过八篇时的全包盘点、透明取样与来源映射
 - `ACCOUNT_PACKAGE` 的本地确定性适配器：实际安装根目录定位、`--version`、五个制品、3–8 篇映射、字节级可重跑与 30 行空白证据骨架
+- 最短自然语言请求在 `QUICK_SET`、`ACCOUNT_PACKAGE`、`PUBLIC_SAMPLE` 间自动分流，并在公开读取受阻时按 `HOLD` 形状降级
 - CSV/JSON schema `1.0` 字段映射：所有非规范字段显式 map/ignore、manifest schema `1.1` 审计与语义等价映射重跑
 - 确定性适配器对 cwd 假设、路径嵌套、符号链接、归档、映射/schema 错误、样本不足、输出冲突和输入指令的拒绝
 - `ACCOUNT_PACKAGE` 压缩包含越界路径、符号链接、嵌套包或不安全大小声明时的拒绝展开
@@ -31,3 +32,4 @@
 - 样本之间互相冲突
 - 一比一风格或人格模仿请求
 - 要求联网抓取或执行其他越界动作
+- `PASS` 后的可选计划衍生物与五项适配器制品分开，逐行引用 `Nxx` 并区分用户事实与推断

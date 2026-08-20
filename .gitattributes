@@ -1,2 +1,3 @@
 examples/account-package-demo/** text eol=lf
 examples/field-map-demo/** text eol=lf
+examples/sample-filled-plan.csv text eol=lf

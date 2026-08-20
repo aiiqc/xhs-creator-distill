@@ -33,6 +33,10 @@ ARTIFACT_ORDER = [
     "30-day-content-plan.csv",
 ]
 ARTIFACTS = set(ARTIFACT_ORDER)
+INPUT_ERROR_HINT = (
+    "Hint: rerun this same script by its absolute path with --help, or see the "
+    "installed Skill's references/import-recipes.md."
+)
 INVENTORY_FIELDS = [
     "source_id",
     "source_path",
@@ -777,9 +781,38 @@ class AdapterTestCase(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(
                 result.stdout,
-                "xhs-creator-distill account-package adapter v0.4.0\n",
+                "xhs-creator-distill account-package adapter v0.4.1\n",
             )
             self.assertEqual(result.stderr, "")
+
+    def test_help_aliases_exit_zero_on_stdout(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            for option in ("-h", "--help"):
+                with self.subTest(option=option):
+                    result = subprocess.run(
+                        [sys.executable, str(SCRIPT.resolve()), option],
+                        cwd=temp,
+                        text=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        timeout=10,
+                        check=False,
+                    )
+
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(result.stderr, "")
+                    self.assertIn("Usage / 用法:", result.stdout)
+                    self.assertIn("--version", result.stdout)
+                    self.assertIn("Canonical input example / 规范输入示例:", result.stdout)
+                    self.assertIn(
+                        "/absolute/path/to/xhs-creator-distill/scripts/prepare_account_package.py",
+                        result.stdout,
+                    )
+                    self.assertIn(
+                        "--field-map /absolute/path/to/field-map.json",
+                        result.stdout,
+                    )
+                    self.assertIn("references/import-recipes.md", result.stdout)
 
     def test_markdown_directory_uses_stable_relative_order(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -1167,6 +1200,31 @@ class AdapterTestCase(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("usage:", result.stderr)
+        self.assertIn("--version", result.stderr)
+        self.assertEqual(result.stderr.count(INPUT_ERROR_HINT), 1)
+        self.assertEqual(result.stdout, "")
+
+    def test_input_format_error_appends_one_static_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            result = self.run_adapter(root / "missing.csv", root / "output")
+
+            self.assertEqual(result.returncode, 2)
+            self.assertIn("ERROR: INPUT does not exist", result.stderr)
+            self.assertEqual(result.stderr.count(INPUT_ERROR_HINT), 1)
+
+    def test_output_conflict_error_has_no_input_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "output"
+            output.mkdir()
+            (output / "keep.txt").write_text("preserve", encoding="utf-8")
+
+            result = self.run_adapter(DEMO_INPUT, output)
+
+            self.assertEqual(result.returncode, 4)
+            self.assertIn("ERROR: OUTPUT must be a new or empty directory", result.stderr)
+            self.assertNotIn(INPUT_ERROR_HINT, result.stderr)
+            self.assertEqual((output / "keep.txt").read_text(encoding="utf-8"), "preserve")
 
 
 if __name__ == "__main__":

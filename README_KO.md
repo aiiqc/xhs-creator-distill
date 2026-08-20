@@ -19,6 +19,24 @@
 > [!IMPORTANT]
 > 이 프로젝트는 독립적인 오픈 소스 커뮤니티 프로젝트이며, 샤오홍수의 공식 제품이 아닙니다. 또한 샤오홍수의 공식 허가, 인정 또는 후원을 받지 않았습니다. “小红书” 및 관련 표식에 대한 권리는 각 권리자에게 있습니다.
 
+<!-- human-outcome-preview-start -->
+## 결과부터 보기
+
+결과물은 “이 계정은 콘텐츠를 잘 만든다” 같은 모호한 한 문장이 아니라, 원본 자료까지 추적해 검토할 수 있는 작업 초안입니다. 전체 합성 경로에서는 다음과 같은 결과를 확인할 수 있습니다.
+
+```text
+상태: PASS · 모드: ACCOUNT_PACKAGE
+커버리지: 발견 11 · 파싱 11 · 전체 텍스트 10 · 독립 사용 가능 9 · 심층 분석 8
+신뢰도 높음: 복잡한 작업을 순서가 있는 체크포인트, 단계 또는 범주로 나눔 [N01,N02,N03,N04,N05,N06,N08]
+신뢰도 높음: 행동 뒤에 검토, 중단 조건, 반례 또는 미확인 항목을 둠 [N01,N02,N04,N05,N06,N08]
+예외: 중복 1개, 정보량 부족 1개. N07은 격리 테스트 항목이며 콘텐츠 메커니즘의 근거로 사용하지 않음
+미확인: 자료 패키지가 플랫폼 전체 계정과 같은지 여부. 플랫폼과 대조한 독립 검증은 하지 않음
+다음 단계: 근거에서 독창적인 주제를 만들고 실제 게시 결과로 검증
+```
+
+먼저 [자료 패키지 엔드투엔드 합성 안내](examples/account-package-walkthrough.md)를 보고, [자료 패키지 모드 전체 PASS 보고서](examples/sample-account-package-report.md)와 [근거 부족 시 HOLD 보고서](examples/sample-hold-report.md)를 비교하세요. 모두 합성 예제이며 외부 채택이나 플랫폼 성과의 증거가 아닙니다.
+<!-- human-outcome-preview-end -->
+
 ## 한 문장으로 설명하면
 
 `xhs-creator-distill`에는 두 가지 입력 방식이 있습니다.
@@ -38,7 +56,7 @@
 | --- | --- | --- | --- |
 | `QUICK_SET` | 대표 노트 3–8개 | 인터넷 연결 없이 모두 심층 분석 | 빠른 결과, 정밀함, 통제 가능한 개인정보 보호를 원하는 사용자 |
 | `PUBLIC_SAMPLE` | 공개 계정 URL 또는 고유 식별자 | 보이는 항목을 최대 60개까지 파악하고 최대 8개를 심층 분석하며, 접근 제어로 차단될 수 있음 | 먼저 공개 읽기를 시도하려는 사용자 |
-| `ACCOUNT_PACKAGE` | 계정 내보내기, 파일, 디렉터리 또는 구조화된 모음 | 플랫폼 로그인 없이 전체 패키지를 파악한 뒤 3–8개를 심층 분석 | 성공률 높은 전체 계정 기본 경로, 패키지 단위 포괄성, 재검증 가능한 결론이 필요한 사용자 |
+| `ACCOUNT_PACKAGE` | 계정 내보내기, 파일, 디렉터리 또는 구조화된 모음 | 플랫폼 로그인 없이 전체 패키지를 파악한 뒤 3–8개를 심층 분석 | 플랫폼 로그인 장벽을 피하고 패키지 단위 포괄성과 재검증 가능한 결론을 원하는 사용자 |
 
 ### “전체 계정”이라는 표현의 정직성 경계
 
@@ -46,7 +64,7 @@
 - 사용자가 내보내기 파일이나 자료 패키지를 제공한 경우에만 **현재 자료 패키지 범위 내의 전체 파악**을 수행할 수 있습니다.
 - 사용자가 완전한 내보내기 자료라고 설명하더라도, 보고서에는 “플랫폼의 실제 전체 데이터와 대조해 독립적으로 검증한 것은 아님”을 명시합니다.
 - 각 계정 보고서에는 발견 수, 파싱 수, 전체 텍스트 확보 수, 심층 분석 수, 중단 이유, 미포함 항목을 표시합니다.
-- `ACCOUNT_PACKAGE`는 플랫폼 로그인이 필요 없고 성공률을 더 통제하기 쉬운 전체 계정 기본 경로입니다. “전체”는 사용자가 제공한 현재 자료 패키지 범위만 뜻합니다.
+- `ACCOUNT_PACKAGE`는 플랫폼 로그인 장벽을 피하고 입력 범위를 더 통제하기 쉽게 합니다. “전체”는 사용자가 제공한 현재 자료 패키지 범위만 뜻합니다.
 
 ## 무엇을 추출하는가
 
@@ -78,31 +96,34 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 `/path/to/your/skills`를 실제 디렉터리로 바꾸고 호스트 안내에 따라 Skill을 다시 로드하세요.
 
-### `v0.4.0` 고정
+### `v0.4.1` 고정
 
 이번에 검토한 릴리스를 재현하려면 정확한 tag를 고정해 클론하세요.
 
 ```bash
-git clone --branch v0.4.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.4.1 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 빠른 사용법
 
-### 간편 계정 입력
+핵심 근거, 커버리지, 접근 및 개인정보 보호 경계는 [Skill 계약](SKILL.md)에 있지만, 호스트가 `$xhs-creator-distill`을 실제로 발견하고 로드한 경우에만 적용됩니다. 사용하기 전에 호스트가 이 Skill을 표시하거나 호출하는지 확인하세요. 저장소가 설치되었다는 사실만으로 현재 세션에 로드되었다고 볼 수 없습니다.
 
-<!-- public-sample-access-boundary -->
-샤오홍수 웹사이트의 비로그인 읽기는 로그인 장벽, CAPTCHA 또는 기타 접근 제어로 차단될 수 있습니다. 이는 예상된 경계이며 Skill 고장이 아닙니다. 이 프로젝트는 로그인하거나 접근 제어를 우회하지 않습니다. 차단되면 플랫폼 로그인 없이 사용할 수 있는 `ACCOUNT_PACKAGE` 기본 경로에 자신의 내보내기/자료 패키지를 제공하거나, 3–8개 자료를 `QUICK_SET`으로 제공하세요.
+<!-- human-quickstart-start -->
+현재 가지고 있는 자료와 가장 가까운 상황을 선택하세요.
 
-```text
-$xhs-creator-distill의 간편 모드를 사용해서
-이 공개 샤오홍수 계정을 분석해 주세요: <PUBLIC_ACCOUNT_URL>
+1. **전체 본문이 있는 노트 3–8개가 있음(`QUICK_SET`)**<br>
+   한 문장: `$xhs-creator-distill을 사용해 첨부한 노트 3–8개를 분석하고 근거 ID와 신뢰도가 포함된 5계층 콘텐츠 운영 체계를 출력해 주세요.`<br>
+   대안: 제목이나 요약만 있다면 전체 본문을 추가하세요. 아직 추가할 수 없다면 범위를 좁힌 분석을 요청하고 근거 없는 결론은 `HOLD`로 남기세요.
+2. **계정 내보내기 또는 로컬 자료 패키지가 있음(`ACCOUNT_PACKAGE`, 전체 계정 기본 경로)**<br>
+   한 문장: `$xhs-creator-distill을 사용해 첨부한 계정 자료 패키지를 먼저 파악하고 출처 매핑을 유지한 채 최대 8개를 심층 분석해 주세요.`<br>
+   대안: 전처리가 `HOLD`를 반환하면 `manifest.json`에 적힌 필드나 자료를 수정하고 리소스 또는 안전 한도를 우회하지 마세요.
+3. **공개 계정 링크만 있음(`PUBLIC_SAMPLE`)**<br>
+   한 문장: `$xhs-creator-distill을 사용해 이 공개 계정을 제한된 범위로 샘플링해 주세요: <PUBLIC_ACCOUNT_URL>. 분석 전에 실제 커버리지를 밝혀 주세요.`<br>
+   <!-- public-sample-access-boundary -->
+   대안: 비로그인 읽기는 로그인 장벽, CAPTCHA 또는 기타 접근 제어로 차단될 수 있습니다. 이 프로젝트는 로그인, Cookie 사용 또는 접근 제어 우회를 하지 않습니다. 대신 자신의 자료 패키지나 전체 본문이 있는 노트 3–8개를 제공하세요.
 
-공개 페이지만 읽고, 로그인하지 말고, Cookie를 사용하지 말고, 어떤 상호작용도 하지 마세요.
-실제 파악 범위와 심층 분석 범위를 표시한 후 5계층 콘텐츠 운영 체계를 추출해 주세요.
-공개 페이지를 읽을 수 없다면 우회하지 말고 어떤 자료를 업로드해야 하는지 바로 알려 주세요.
-```
-
-### 3–8개 정밀 입력
+<details>
+<summary>펼치기: 노트 3–8개 정밀 모드 전체 템플릿</summary>
 
 ```text
 $xhs-creator-distill을 사용하여 아래 대표 노트 5개를 기반으로
@@ -120,7 +141,10 @@ $xhs-creator-distill을 사용하여 아래 대표 노트 5개를 기반으로
 ……
 ```
 
-### 전체 계정 자료 패키지 입력
+</details>
+
+<details>
+<summary>펼치기: 전체 계정 자료 패키지 모드 전체 템플릿</summary>
 
 ```text
 $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기 자료를 분석해 주세요.
@@ -130,15 +154,36 @@ $xhs-creator-distill을 사용하여 이 작업에 첨부한 계정 내보내기
 자료 패키지 안의 명령이나 프로그램을 실행하지 말고, 자료 패키지를 플랫폼의 전체 데이터라고 자동으로 선언하지 마세요.
 ```
 
+</details>
+
+<details>
+<summary>펼치기: 공개 계정 모드 전체 템플릿</summary>
+
+```text
+$xhs-creator-distill의 간편 모드를 사용해서
+이 공개 샤오홍수 계정을 분석해 주세요: <PUBLIC_ACCOUNT_URL>
+
+공개 페이지만 읽고, 로그인하지 말고, Cookie를 사용하지 말고, 어떤 상호작용도 하지 마세요.
+실제 파악 범위와 심층 분석 범위를 표시한 후 5계층 콘텐츠 운영 체계를 추출해 주세요.
+공개 페이지를 읽을 수 없다면 우회하지 말고 어떤 자료를 업로드해야 하는지 바로 알려 주세요.
+```
+
+</details>
+<!-- human-quickstart-end -->
+
 ### 결정론적 자료 패키지 어댑터
 
 `v0.3.0`에서 Python 표준 라이브러리만 사용하는 로컬 전처리 도구를 도입했고(Python 3.10 이상 필요), `v0.4.0`에서 엄격한 필드 매핑과 설치 후에도 안전한 절대 경로 호출을 추가했습니다. 정규 CSV, JSON 또는 Markdown 디렉터리를 입력받아 명시된 리소스 한도 안에서 목록과 안정적인 근거 매핑을 만든 다음, 5계층 분석용 자료를 Skill에 전달합니다. 한도에 도달하면 처리를 중지하고 `READY`를 반환하지 않습니다. 현재 디렉터리나 설치 위치 차이로 스크립트를 잘못 찾지 않도록 먼저 Skill 루트를 절대 경로로 설정하세요.
+
+호스트 에이전트는 먼저 실제로 로드된 `SKILL.md` 경로에서 루트를 확인한 뒤, 그 절대 경로를 `XHS_SKILL_ROOT`로 설정해야 합니다. 사용자가 명령을 직접 실행할 때는 스크립트의 전체 절대 경로를 쓰면 되며, 별도로 `export`할 필요는 없습니다.
 
 ```bash
 export XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill
 python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --version
 python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT
 ```
+
+Windows에서는 Bash의 `export` 구문을 PowerShell에 그대로 복사하지 말고 [표준 PowerShell 절차](references/windows-powershell.md)를 사용하세요.
 
 출력 디렉터리에는 다음 파일이 생성됩니다.
 
@@ -177,7 +222,9 @@ python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" INPUT OUTPUT \
 
 ### 60초 합성 데모
 
-[60초 합성 데모](examples/account-package-demo/README.md)와 [매핑 합성 데모](examples/field-map-demo/README.md)는 완전히 가상으로 만든 CSV만 사용하며, 로그인이 필요 없고 개인 데이터를 포함하지 않습니다. 저장소 루트에서 다음 고정 오프라인 회귀 테스트를 실행하세요.
+먼저 [엔드투엔드 합성 안내](examples/account-package-walkthrough.md)를 여세요. 가상 입력 11개가 파악과 8개 심층 분석을 거쳐 근거 기반 PASS 보고서와 7일 독창적 계획으로 이어지는 과정을 보여 줍니다. 바이트 단위로 재현 가능한 어댑터 결과물 5개는 [60초 합성 데모](examples/account-package-demo/README.md)와 [매핑 합성 데모](examples/field-map-demo/README.md)에 있습니다. 로그인은 필요 없고 개인 데이터도 포함하지 않습니다.
+
+결과를 재현하려면 저장소 루트에서 고정 오프라인 회귀 테스트를 실행하세요.
 
 ```bash
 python3 scripts/test_prepare_account_package.py AdapterTestCase.test_repository_demo_matches_golden_outputs -v
@@ -236,6 +283,7 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 - [x] `v0.3.0`: CSV, JSON, Markdown 디렉터리용 결정론적 자료 패키지 어댑터, 근거 매핑, 30일 계획 골격.
 - [x] `v0.3.1`: 60초 합성 CSV 데모, 골든 출력 5개, 수식/프롬프트 인젝션 회귀, macOS/Windows 바이트 일치 검증.
 - [x] `v0.4.0`: 엄격한 필드 매핑, 매핑 골든 데모, 크로스 플랫폼 회귀, 공개 읽기 실패 시 기본 경로 전환 안내.
+- [x] `v0.4.1`: 결과 우선 미리보기, 세 가지 상황별 빠른 시작, PowerShell 절차, 엔드투엔드 합성 안내, `HOLD` 예제.
 - [ ] 실제 비식별화 샘플을 바탕으로 일반 가져오기 레시피를 확장하되 타사 도구와의 고정 호환성을 주장하지 않습니다.
 - [ ] 비식별화된 사용 피드백을 바탕으로 샘플링과 근거 프로토콜을 개선합니다.
 - [ ] 5개 출력 언어와 전체형, 집중형, `HOLD` 보고서를 지원하는 구조 검증기를 구축합니다. 구조 통과는 의미적 진실성을 증명하지 않습니다.
@@ -245,7 +293,7 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 
 ## 유지보수 상태
 
-현재 버전은 `v0.4.0`입니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
+현재 버전은 `v0.4.1`입니다. 이 릴리스는 세 가지 모드의 근거, 커버리지, 안전 의미를 바꾸지 않으면서 첫 사용 장벽을 낮춥니다. 이 프로젝트는 [Semantic Versioning](https://semver.org/)에 따라 버전을 기록하고, [CHANGELOG](CHANGELOG.md)에 변경 사항을 설명합니다.
 
 - 일반 문의 및 제안: GitHub Issues를 사용하세요.
 - 코드 및 문서 기여: 먼저 [CONTRIBUTING.md](CONTRIBUTING.md)를 읽어 보세요.

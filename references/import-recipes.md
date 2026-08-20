@@ -4,15 +4,28 @@
 
 ## 目录
 
-1. 首次成功路径
-2. 映射原则
-3. 合成 CSV 示例
-4. 合成 JSON 示例
-5. 常见拒绝与修正
+1. 命令帮助与 Windows 入口
+2. 首次成功路径
+3. 映射原则
+4. 合成 CSV 示例
+5. 合成 JSON 示例
+6. 常见拒绝与修正
+
+## 命令帮助与 Windows 入口
+
+完成下一节的 `XHS_SKILL_ROOT` 检查后，使用以下命令查看适配器支持的参数、规范输入与字段映射示例：
+
+```bash
+python3 "$XHS_SKILL_ROOT/scripts/prepare_account_package.py" --help
+```
+
+Windows 用户请使用 [PowerShell 首次成功指南](windows-powershell.md)；其中包含根目录检查、两种输入命令、两份合成 Demo 与结果查看步骤。
 
 ## 首次成功路径
 
 先从宿主实际加载的 Skill 路径解析绝对根目录，不要假设当前工作目录：
+
+宿主代理先从实际加载的 `SKILL.md` 路径解析根目录，再把该绝对路径设为 `XHS_SKILL_ROOT`；人工直接运行时也可在命令中写脚本的完整绝对路径，无需额外设置变量。
 
 ```bash
 XHS_SKILL_ROOT=/absolute/path/to/xhs-creator-distill

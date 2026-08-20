@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 
-ADAPTER_VERSION = "0.4.0"
+ADAPTER_VERSION = "0.4.1"
 SCHEMA_VERSION = "1.1"
 FIELD_MAP_SCHEMA_VERSION = "1.0"
 SELECTION_PROTOCOL = "pinned-recent-engagement-type-source-order-v1"
@@ -61,6 +61,33 @@ PLAN_FIELDS = (
     "validation_signal",
     "notes",
 )
+USAGE = (
+    "usage: prepare_account_package.py INPUT OUTPUT [--field-map MAP.json] "
+    "| --version | -h | --help"
+)
+INPUT_ERROR_HINT = (
+    "Hint: rerun this same script by its absolute path with --help, or see the "
+    "installed Skill's references/import-recipes.md."
+)
+HELP_TEXT = """\
+Prepare an auditable ACCOUNT_PACKAGE from local CSV, JSON, or Markdown input.
+从本地 CSV、JSON 或 Markdown 输入生成可审计的 ACCOUNT_PACKAGE。
+
+Usage / 用法:
+  prepare_account_package.py INPUT OUTPUT [--field-map MAP.json]
+  prepare_account_package.py --version
+  prepare_account_package.py -h | --help
+
+Canonical input example / 规范输入示例:
+  python3 /absolute/path/to/xhs-creator-distill/scripts/prepare_account_package.py /absolute/path/to/posts.csv /absolute/path/to/package-output
+
+Field-mapped CSV or JSON example / 字段映射示例:
+  python3 /absolute/path/to/xhs-creator-distill/scripts/prepare_account_package.py /absolute/path/to/export.csv /absolute/path/to/package-output --field-map /absolute/path/to/field-map.json
+
+OUTPUT must be a new or empty directory. See references/import-recipes.md and
+references/windows-powershell.md for input rules and platform-specific commands.
+OUTPUT 必须是不存在或已为空的目录；输入规则和平台命令见上述文档。
+"""
 
 
 class AdapterError(Exception):
@@ -1169,6 +1196,9 @@ def validate_field_map_path(field_map_arg: str) -> Path:
 
 
 def run(argv: Sequence[str]) -> int:
+    if len(argv) == 2 and argv[1] in {"-h", "--help"}:
+        print(HELP_TEXT, end="")
+        return 0
     if len(argv) == 2 and argv[1] == "--version":
         print(f"xhs-creator-distill account-package adapter v{ADAPTER_VERSION}")
         return 0
@@ -1178,10 +1208,8 @@ def run(argv: Sequence[str]) -> int:
     elif len(argv) == 5 and argv[3] == "--field-map":
         field_map_arg = argv[4]
     else:
-        print(
-            "usage: prepare_account_package.py INPUT OUTPUT [--field-map MAP.json]",
-            file=sys.stderr,
-        )
+        print(USAGE, file=sys.stderr)
+        print(INPUT_ERROR_HINT, file=sys.stderr)
         return InputFormatError.exit_code
     try:
         input_path, output_path = validate_paths(argv[1], argv[2])
@@ -1198,6 +1226,8 @@ def run(argv: Sequence[str]) -> int:
         return 3
     except AdapterError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
+        if isinstance(exc, InputFormatError):
+            print(INPUT_ERROR_HINT, file=sys.stderr)
         return exc.exit_code
     except Exception as exc:  # pragma: no cover - last-resort CLI boundary
         print(f"INTERNAL ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)

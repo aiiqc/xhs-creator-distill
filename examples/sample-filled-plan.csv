@@ -1,0 +1,8 @@
+day,status,topic,title_angle,audience_need,evidence_ids,format,call_to_action,validation_signal,notes
+1,DRAFT_EVIDENCE_LINKED,桌面整理前的快速盘点,先别收纳先找出高频物品,需要低门槛整理起点,"N01,N04",清单,请读者列出最常用的三件物品,读者能否完成盘点并指出卡点,USER_FACT: unknown; INFERENCE: 盘点入口可能降低开始阻力
+2,DRAFT_EVIDENCE_LINKED,把复杂任务拆成检查点,四个检查点比一长串建议更易核对,需要看得见的执行顺序,"N04,N01",教程,请读者标记当前停在哪个检查点,读者能否复述下一步和停止原因,USER_FACT: unknown; INFERENCE: 显式检查点可能减少执行歧义
+3,DRAFT_EVIDENCE_LINKED,一轮小实验怎么记录,先写假设再只改一个变量,需要可复核的试验方法,"N02,N06",模板,请读者先填一条假设和停止条件,反馈是否能区分观察与结论,USER_FACT: unknown; INFERENCE: 单变量记录可能让复盘更清楚
+4,DRAFT_EVIDENCE_LINKED,常见误区复盘,错误不只要列出还要配复查动作,需要避免重复踩坑,"N05,N06",清单,请读者选择最常发生的一类错误,读者能否为所选错误补一个复查动作,USER_FACT: unknown; INFERENCE: 错误分类配复查可能提高可执行性
+5,DRAFT_EVIDENCE_LINKED,周末低成本三阶段整理,给每个阶段一个时间边界和复核点,需要在有限时间内完成整理,"N03,N01",教程,请读者选择能完成的最小阶段,读者是否按阶段回报完成或停止,USER_FACT: unknown; INFERENCE: 时间边界可能帮助控制任务范围
+6,DRAFT_EVIDENCE_LINKED,实验没按预期时怎么修正,别一次改完先保留一个变量和回退点,需要可解释地调整失败实验,"N02,N04,N06",复盘,请读者只选择一个变量进入下一轮,反馈是否能区分观察结果和修正动作,USER_FACT: unknown; INFERENCE: 单变量和回退点可能减少复盘中的过度归因
+7,DRAFT_EVIDENCE_LINKED,集中回答重复问题,先分事实经验和未知再给下一步,需要清楚处理多条相似提问,"N08,N05",问答,请读者指出仍属未知的一项,后续追问是否集中在明确的未知项,USER_FACT: unknown; INFERENCE: 显式区分未知可能减少把经验写成事实

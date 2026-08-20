@@ -270,15 +270,139 @@ def main() -> int:
     def drift_readme_version(repository: Path) -> None:
         path = repository / "README_EN.md"
         path.write_text(
-            path.read_text(encoding="utf-8").replace("v0.4.0", "v0.4.9"),
+            path.read_text(encoding="utf-8").replace("v0.4.1", "v0.4.9"),
             encoding="utf-8",
             newline="\n",
         )
 
     assert_fail(
         "translated README version drift",
-        "README_EN.md is missing synchronized fragment: v0.4.0",
+        "README_EN.md is missing synchronized fragment: v0.4.1",
         drift_readme_version,
+    )
+
+    def remove_readme_human_marker(repository: Path) -> None:
+        path = repository / "README_EN.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "<!-- human-quickstart-start -->",
+                "<!-- human-quickstart-drifted -->",
+                1,
+            ),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "translated README human quickstart marker drift",
+        "README_EN.md is missing synchronized fragment: <!-- human-quickstart-start -->",
+        remove_readme_human_marker,
+    )
+
+    def inject_full_report_section_into_hold(repository: Path) -> None:
+        path = repository / "examples/sample-hold-report.md"
+        path.write_text(
+            path.read_text(encoding="utf-8") + "\n## 执行摘要\n\n不应出现。\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "HOLD example cannot contain PASS-only sections",
+        "HOLD example must not contain execution summary or five-layer report",
+        inject_full_report_section_into_hold,
+    )
+
+    def remove_summary_evidence(repository: Path) -> None:
+        path = repository / "examples/sample-distill-report.md"
+        original = path.read_text(encoding="utf-8")
+        mutated = original.replace(
+            "| 从时间紧、预算有限或复热失败等具体任务切入 | 推断 | N01, N02, N03, N04 | 高 |",
+            "| 从时间紧、预算有限或复热失败等具体任务切入 | 推断 | 未提供 | 高 |",
+            1,
+        )
+        if mutated == original:
+            raise AssertionError("summary evidence mutation target is missing")
+        path.write_text(mutated, encoding="utf-8", newline="\n")
+
+    assert_fail(
+        "PASS summary requires evidence",
+        "execution summary row 1 is missing Nxx evidence",
+        remove_summary_evidence,
+    )
+
+    def remove_filled_plan_evidence(repository: Path) -> None:
+        path = repository / "examples/sample-filled-plan.csv"
+        original = path.read_text(encoding="utf-8")
+        mutated = original.replace('"N01,N04"', '""', 1)
+        if mutated == original:
+            raise AssertionError("filled plan evidence mutation target is missing")
+        path.write_text(mutated, encoding="utf-8", newline="\n")
+
+    assert_fail(
+        "filled plan requires evidence on every row",
+        "filled plan example evidence_ids must be nonempty at row 1",
+        remove_filled_plan_evidence,
+    )
+
+    def add_extra_filled_plan_column(repository: Path) -> None:
+        path = repository / "examples/sample-filled-plan.csv"
+        lines = path.read_text(encoding="utf-8").splitlines()
+        lines[1] = lines[1] + ",unexpected"
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+    assert_fail(
+        "filled plan rejects an extra CSV column without traceback",
+        "filled plan example has malformed columns at row 1",
+        add_extra_filled_plan_column,
+    )
+
+    def corrupt_account_report_mapping(repository: Path) -> None:
+        path = repository / "examples/sample-account-package-report.md"
+        original = path.read_text(encoding="utf-8")
+        mutated = original.replace("| `N01` | `S001` |", "| `N01` | `S999` |", 1)
+        if mutated == original:
+            raise AssertionError("account report mapping mutation target is missing")
+        path.write_text(mutated, encoding="utf-8", newline="\n")
+
+    assert_fail(
+        "account-package report mapping must match golden evidence map",
+        "account-package report mapping is inconsistent: N01 -> S001",
+        corrupt_account_report_mapping,
+    )
+
+    def add_credential_shape_to_human_example(repository: Path) -> None:
+        path = repository / "examples/sample-account-package-report.md"
+        path.write_text(
+            path.read_text(encoding="utf-8")
+            + "\nFAKE_SECRET_ghp_0123456789abcdefghijklmn\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "credential-shaped value in human-facing synthetic example",
+        "credential-shaped content in synthetic data",
+        add_credential_shape_to_human_example,
+    )
+
+    def drift_deterministic_eval_version(repository: Path) -> None:
+        path = repository / "evals/cases/deterministic-package-adapter.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "xhs-creator-distill account-package adapter v0.4.1",
+                "xhs-creator-distill account-package adapter v0.4.0",
+                1,
+            ),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "deterministic eval adapter version drift",
+        "evals/cases/deterministic-package-adapter.md is missing package-adapter contract: "
+        "xhs-creator-distill account-package adapter v0.4.1",
+        drift_deterministic_eval_version,
     )
 
     def remove_body_target_boundary(repository: Path) -> None:
@@ -296,6 +420,24 @@ def main() -> int:
         "translated README body-target boundary drift",
         "README_EN.md is missing synchronized safety boundary: `body` cannot be a map target",
         remove_body_target_boundary,
+    )
+
+    def reverse_loaded_skill_root_boundary(repository: Path) -> None:
+        path = repository / "README_EN.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "actually loaded `SKILL.md` path",
+                "preconfigured environment variable",
+                1,
+            ),
+            encoding="utf-8",
+            newline="\n",
+        )
+
+    assert_fail(
+        "translated README loaded-Skill root boundary drift",
+        "README_EN.md is missing synchronized safety boundary: actually loaded `SKILL.md` path",
+        reverse_loaded_skill_root_boundary,
     )
     return 0
 

@@ -72,6 +72,68 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Exercise documented Windows PowerShell path
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $SkillRoot = (Get-Item -LiteralPath ".").FullName
+          $SkillFile = Join-Path $SkillRoot "SKILL.md"
+          $Adapter = Join-Path $SkillRoot "scripts\prepare_account_package.py"
+          if (-not (Test-Path -LiteralPath $SkillFile -PathType Leaf)) {
+            throw "SKILL.md was not found at the selected root."
+          }
+          if (-not (Test-Path -LiteralPath $Adapter -PathType Leaf)) {
+            throw "prepare_account_package.py was not found at the selected root."
+          }
+
+          $Python = (Get-Command -Name "python" -CommandType Application -ErrorAction Stop).Source
+          & "$Python" "$Adapter" --version
+          if ($LASTEXITCODE -ne 0) { throw "Adapter version check failed with exit code $LASTEXITCODE." }
+          & "$Python" "$Adapter" --help
+          if ($LASTEXITCODE -ne 0) { throw "Adapter help failed with exit code $LASTEXITCODE." }
+
+          $TempRoot = (Get-Item -LiteralPath $env:RUNNER_TEMP).FullName
+          $CanonicalInputPath = Join-Path $SkillRoot "examples\account-package-demo\input\posts.csv"
+          $CanonicalInput = (Get-Item -LiteralPath $CanonicalInputPath).FullName
+          $CanonicalOutput = Join-Path $TempRoot ("xhs-canonical-demo-" + [Guid]::NewGuid().ToString("N"))
+          & "$Python" "$Adapter" "$CanonicalInput" "$CanonicalOutput"
+          if ($LASTEXITCODE -ne 0) { throw "Canonical demo failed with exit code $LASTEXITCODE." }
+
+          $FieldMapInputPath = Join-Path $SkillRoot "examples\field-map-demo\input\posts-export.csv"
+          $FieldMapPath = Join-Path $SkillRoot "examples\field-map-demo\input\field-map.json"
+          $FieldMapInput = (Get-Item -LiteralPath $FieldMapInputPath).FullName
+          $FieldMap = (Get-Item -LiteralPath $FieldMapPath).FullName
+          $FieldMapOutput = Join-Path $TempRoot ("xhs-field-map-demo-" + [Guid]::NewGuid().ToString("N"))
+          & "$Python" "$Adapter" "$FieldMapInput" "$FieldMapOutput" --field-map "$FieldMap"
+          if ($LASTEXITCODE -ne 0) { throw "Field-map demo failed with exit code $LASTEXITCODE." }
+
+          $ExpectedArtifacts = @(
+            "30-day-content-plan.csv",
+            "distill-input.md",
+            "evidence-map.csv",
+            "inventory.csv",
+            "manifest.json"
+          )
+          foreach ($OutputDirectory in @($CanonicalOutput, $FieldMapOutput)) {
+            $ActualArtifacts = @(
+              Get-ChildItem -LiteralPath $OutputDirectory -File |
+                ForEach-Object { $_.Name } |
+                Sort-Object
+            )
+            $Differences = @(
+              Compare-Object -ReferenceObject $ExpectedArtifacts -DifferenceObject $ActualArtifacts
+            )
+            if ($Differences.Count -ne 0) {
+              throw "Unexpected artifact set in ${OutputDirectory}: $($ActualArtifacts -join ', ')"
+            }
+            $ManifestPath = Join-Path $OutputDirectory "manifest.json"
+            $Manifest = Get-Content -LiteralPath $ManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($Manifest.status -ne "READY") {
+              throw "Manifest was not READY in $OutputDirectory."
+            }
+          }
+
       - name: Compare generated demo with golden outputs
         run: >-
           python scripts/test_prepare_account_package.py

@@ -6,6 +6,20 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-20
+
+### Added
+
+- 面向非工程用户的三种情境式入口、最短提示词与合成结果预览，并同步简体中文、繁体中文、英文、日文和韩文说明及 Codex UI 默认提示。
+- Windows PowerShell 首次成功指南，以及在 Windows GitHub Actions 中实际执行版本、帮助、两套 Demo、五项制品和 `READY` 状态检查的回归路径。
+- `-h` / `--help`、固定输入修正指引、合成 `HOLD` 报告、与资料包 Demo 对齐的完整报告、独立七天衍生计划示例，以及一次最短请求的合成宿主烟雾记录。
+
+### Changed
+
+- 顶层 README 与两套 Demo 改为先生成并查看结果，再把字节级回归作为贡献者验证；详细机制通过引用渐进披露，避免在每份 README 重复维护。
+- 完整报告清单显式包含既有执行摘要；可选计划只在报告 `PASS` 且用户明确需要时生成独立 `DRAFT_EVIDENCE_LINKED` 衍生物，默认在回复中交付；本地写入须有授权的准确路径，并对 CSV 公式前缀做安全防护，不覆盖五项确定性适配器制品。
+- 适配器版本更新为 `v0.4.1`；既有字段映射、资源上限、取样、安全规则、manifest schema `1.1` 与两套五项黄金输出保持不变。
+
 ## [0.4.0] - 2026-08-15
 
 ### Added
@@ -16,7 +30,7 @@
 
 ### Changed
 
-- 将无需平台登录的 `ACCOUNT_PACKAGE` 明确为成功率更可控的整号主路径；`PUBLIC_SAMPLE` 保留为有界公开读取，并明确访问控制阻断属于预期边界且不会绕过。
+- 将 `ACCOUNT_PACKAGE` 明确为避开平台登录墙、输入范围更可控的整号主路径；`PUBLIC_SAMPLE` 保留为有界公开读取，并明确访问控制阻断属于预期边界且不会绕过。
 - 五语 README 同步 `v0.4.0` 固定安装、绝对 `XHS_SKILL_ROOT` 调用、严格字段映射契约和两组黄金回归命令。
 - CI 在最低支持的 Python 3.10 上运行完整适配器测试，并在 macOS/Windows 上逐字节校验无映射与带映射两组黄金输出。
 
@@ -89,7 +103,8 @@
 - 输入安全、隐私、原创与诚实边界。
 - 合成示例、参考文档、基础评测与 GitHub 社区文件。
 
-[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/aiiqc/xhs-creator-distill/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.1
 [0.4.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.4.0
 [0.3.1]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.3.1
 [0.3.0]: https://github.com/aiiqc/xhs-creator-distill/releases/tag/v0.3.0
