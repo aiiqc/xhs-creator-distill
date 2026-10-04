@@ -54,7 +54,7 @@ This project therefore provides two entry points and three auditable modes:
 
 | Mode | Input | Default behavior | Best for |
 | --- | --- | --- | --- |
-| `QUICK_SET` | 3–8 representative posts | Analyze all posts deeply, without network access | Users who want speed, precision, and privacy control |
+| `QUICK_SET` | 3–8 representative posts | Analyze all posts deeply, without network access; return a concise action brief by default | Users who want speed, precision, and privacy control |
 | `PUBLIC_SAMPLE` | Public account URL or unique identifier | Inventory up to 60 visible items and deeply analyze up to 8; access controls may block it | Users who want to try public reading first |
 | `ACCOUNT_PACKAGE` | Account export, file, directory, or structured collection | Requires no platform login; inventory the package, then select 3–8 posts | Users who want to avoid platform login walls, get package-level coverage, and retain auditable conclusions |
 
@@ -88,6 +88,8 @@ npx skills add aiiqc/xhs-creator-distill
 
 Installer availability, target directories, and loading behavior depend on the host. Follow the host’s current documentation and command output. This command targets the repository’s latest version; it is not a version-pinned reproducible install.
 
+After installing through the installer, run `npx skills update xhs-creator-distill` to update only this Skill. An update does not prove that the host has loaded the new version; reload according to the host’s instructions and confirm the version. Do not assume that a pinned-tag or manual installation was upgraded by this command.
+
 ### Manual installation
 
 ```bash
@@ -96,12 +98,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 Replace `/path/to/your/skills` with the actual directory, then reload the Skill according to the host’s instructions.
 
-### Pin `v0.4.3`
+### Pin `v0.5.0`
 
 To reproduce this reviewed release, clone the exact tag:
 
 ```bash
-git clone --branch v0.4.3 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.5.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## Quick start
@@ -112,8 +114,8 @@ The core evidence, coverage, access, and privacy boundaries live in the [Skill c
 Choose the situation closest to the material you already have:
 
 1. **You have 3–8 complete posts (`QUICK_SET`)**<br>
-   One line: `Use $xhs-creator-distill to analyze my attached 3–8 posts and return a five-layer content operating system with evidence IDs and confidence.`<br>
-   Fallback: if you only have titles or summaries, add the full text; if that is not possible yet, request a focused analysis and leave unsupported conclusions at `HOLD`.
+   One line: `Use $xhs-creator-distill to analyze my attached 3–8 posts and show me transferable methods and the next step.`<br>
+   Fallback: if you only have titles or summaries, add the full text. Fewer than three independent complete posts remains `HOLD`; concise or focused output does not lower this threshold.
 2. **You have an account export or local package (`ACCOUNT_PACKAGE`, primary whole-account path)**<br>
    One line: `Use $xhs-creator-distill to inventory my attached account package, then deeply analyze up to eight posts while retaining source mappings.`<br>
    Fallback: if preprocessing returns `HOLD`, fix the fields or material named in `manifest.json`; do not bypass resource or safety limits.
@@ -126,8 +128,8 @@ Choose the situation closest to the material you already have:
 <summary>Expand: complete template for the precise 3–8-post mode</summary>
 
 ```text
-Use $xhs-creator-distill to distill my Xiaohongshu content operating system
-from the five representative posts below.
+Use $xhs-creator-distill to produce a complete five-layer report of my
+Xiaohongshu content operating system from the five representative posts below.
 
 Goal: extract topic-selection, content-structure, and expression rules that can
 be used for a new account. Cite an evidence ID for every item; distinguish
@@ -241,6 +243,8 @@ This verifies local adapter reproducibility only. It does not validate installat
 
 ## Output structure
 
+Ordinary `QUICK_SET` analysis defaults to a concise action brief: retain status, coverage, and input audit; provide up to three transferable methods with evidence, confidence, and limits, followed by one next step and key gaps. Do not invent conclusions to fill a quota. Ask to “expand into a complete five-layer report” for more detail; `ACCOUNT_PACKAGE` and `PUBLIC_SAMPLE` still default to full reports. Concision changes presentation only, not `PASS`/`HOLD`, evidence, or safety thresholds.
+
 A complete report usually includes:
 
 1. Status, mode, coverage statement, and input audit;
@@ -248,6 +252,8 @@ A complete report usually includes:
 3. Five-layer distillation of positioning, topic selection, structure, expression, and operations;
 4. Stable patterns, exceptions, conflicts, and confidence levels;
 5. Transferable rules, non-replicable elements, an action checklist, and a validation plan.
+
+When a seven-day plan is explicitly requested, the conversation defaults to a readable Markdown table. An explicit CSV or export request retains the strict CSV format and safety rules. Finishing an analysis does not automatically generate a plan or save a file.
 
 See the [output contract](references/output-contract.md) for the complete fields and decision rules.
 
@@ -290,16 +296,17 @@ The [MIT License](LICENSE) covers only content that this repository’s authors 
 - [x] `v0.4.1`: an outcome-first preview, a three-situation quick start, a PowerShell path, an end-to-end synthetic walkthrough, and a `HOLD` example.
 - [x] `v0.4.2`: deterministic Python command selection when Windows PowerShell finds multiple `python` candidates, covered by a Windows CI regression check.
 - [x] `v0.4.3`: UTF-8 CLI standard output and error streams, fixing bilingual help under redirected Windows output.
+- [x] `v0.5.0`: concise action briefs for representative posts, full five-layer reports on request, conversational seven-day plan tables, and single-Skill update guidance.
 - [ ] Expand generic import recipes from real, de-identified samples without claiming fixed compatibility with third-party tools.
 - [ ] Improve the sampling and evidence protocols based on de-identified usage feedback.
-- [ ] Build a structural validator for five output languages and full, focused, and `HOLD` reports; structural success does not prove semantic truth.
+- [ ] Build a structural validator for five output languages and concise, full, focused, and `HOLD` reports; structural success does not prove semantic truth.
 - [ ] Evaluate an optional workflow for generating an independent Skill from a distillation report; the current version does not provide this.
 
 The roadmap is not a version commitment. Priorities may change based on validation results and available maintenance resources.
 
 ## Maintenance status
 
-The current version is `v0.4.3`. This release fixes bilingual CLI output encoding under redirected Windows output without changing the evidence, coverage, or safety semantics of the three modes. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
+The current version is `v0.5.0`. This release starts representative-post analysis with a concise action brief, keeps complete five-layer reports available on request, and makes seven-day plans easier to read in conversation. Evidence, coverage, and safety thresholds remain unchanged across all three modes. The project follows [Semantic Versioning](https://semver.org/) and documents changes in the [CHANGELOG](CHANGELOG.md).
 
 - General questions and suggestions: use GitHub Issues.
 - Code and documentation contributions: read [CONTRIBUTING.md](CONTRIBUTING.md) first.

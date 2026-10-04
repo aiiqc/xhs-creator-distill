@@ -122,7 +122,7 @@ class AdapterTestCase(unittest.TestCase):
         return subprocess.run(
             command,
             cwd=cwd,
-            text=True,
+            encoding="utf-8",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=20,
@@ -665,7 +665,7 @@ class AdapterTestCase(unittest.TestCase):
                     str(map_link),
                 ],
                 cwd=ROOT,
-                text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=10,
@@ -700,7 +700,7 @@ class AdapterTestCase(unittest.TestCase):
                     str(nested.resolve() / ".." / "valid-map.json"),
                 ],
                 cwd=ROOT,
-                text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=10,
@@ -771,7 +771,7 @@ class AdapterTestCase(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT.resolve()), "--version"],
                 cwd=temp,
-                text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=10,
@@ -781,18 +781,22 @@ class AdapterTestCase(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(
                 result.stdout,
-                "xhs-creator-distill account-package adapter v0.4.3\n",
+                "xhs-creator-distill account-package adapter v0.5.0\n",
             )
             self.assertEqual(result.stderr, "")
 
     def test_help_aliases_exit_zero_on_stdout(self) -> None:
-        with tempfile.TemporaryDirectory() as temp:
+        with (
+            tempfile.TemporaryDirectory() as temp,
+            mock.patch("locale.getpreferredencoding", return_value="cp1252"),
+            mock.patch("locale.getencoding", return_value="cp1252", create=True),
+        ):
             for option in ("-h", "--help"):
                 with self.subTest(option=option):
                     result = subprocess.run(
                         [sys.executable, str(SCRIPT.resolve()), option],
                         cwd=temp,
-                        text=True,
+                        encoding="utf-8",
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         timeout=10,
@@ -948,6 +952,36 @@ class AdapterTestCase(unittest.TestCase):
                     self.assertEqual(result.returncode, 2, (name, result.stderr))
                     self.assertFalse(output.exists())
 
+    def test_json_parser_limits_exit_two_without_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            valid_input = root / "valid.json"
+            self.write_json(valid_input, records(3))
+            cases = (
+                ("large-integer", '{"items":' + "1" * 5000 + "}"),
+                ("deep-nesting", "[" * 10_000 + "0" + "]" * 10_000),
+            )
+            for name, payload in cases:
+                for subject in ("input", "field-map"):
+                    with self.subTest(name=name, subject=subject):
+                        invalid_path = root / f"{name}-{subject}.json"
+                        invalid_path.write_text(payload, encoding="utf-8")
+                        output = root / f"output-{name}-{subject}"
+                        if subject == "input":
+                            result = self.run_adapter(invalid_path, output)
+                        else:
+                            result = self.run_adapter(
+                                valid_input, output, field_map=invalid_path
+                            )
+
+                        self.assertEqual(result.returncode, 2, result.stderr)
+                        self.assertEqual(result.stdout, "")
+                        self.assertIn("ERROR:", result.stderr)
+                        self.assertNotIn("INTERNAL ERROR", result.stderr)
+                        self.assertNotIn(payload, result.stderr)
+                        self.assertEqual(result.stderr.count(INPUT_ERROR_HINT), 1)
+                        self.assertFalse(output.exists())
+
     def test_large_csv_field_below_total_limit_is_supported(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -1045,7 +1079,7 @@ class AdapterTestCase(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), str(input_path.resolve()), str(dotdot_output)],
                 cwd=ROOT,
-                text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=10,
@@ -1074,7 +1108,7 @@ class AdapterTestCase(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), str(input_dir), str(output)],
                 cwd=ROOT,
-                text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=10,
@@ -1099,7 +1133,7 @@ class AdapterTestCase(unittest.TestCase):
                     str((root / "output-link-root").resolve(strict=False)),
                 ],
                 cwd=ROOT,
-                text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=10,
@@ -1131,7 +1165,7 @@ class AdapterTestCase(unittest.TestCase):
             input_via_alias = subprocess.run(
                 [sys.executable, str(SCRIPT), str(alias / "account.json"), str(root / "output")],
                 cwd=ROOT,
-                text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=10,
@@ -1140,7 +1174,7 @@ class AdapterTestCase(unittest.TestCase):
             output_via_alias = subprocess.run(
                 [sys.executable, str(SCRIPT), str(input_path), str(alias / "output")],
                 cwd=ROOT,
-                text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=10,
@@ -1212,7 +1246,7 @@ class AdapterTestCase(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, str(SCRIPT)],
             cwd=ROOT,
-            text=True,
+            encoding="utf-8",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=10,

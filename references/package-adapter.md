@@ -258,8 +258,8 @@ day,status,topic,title_angle,audience_need,evidence_ids,format,call_to_action,va
 
 ## 可选下游计划衍生物
 
-适配器永远不会生成填充后的计划。只有 Skill 已经完成阶段 3–7、最终报告为 `PASS`，并且用户明确要求内容规划时，才可生成计划衍生物。默认在当前回复中以 CSV 交付；只有用户另行明确要求本地写入，并给出或授权准确目标路径时，才可在适配器 `OUTPUT` 之外另存 `content-plan.filled.csv`。不得从当前工作目录猜测保存位置。该文件不是固定制品、不是新的 golden，也不能替换 `30-day-content-plan.csv`。
+适配器永远不会生成填充后的计划。只有 Skill 已经完成阶段 3–7、最终报告为 `PASS`，并且用户明确要求内容规划时，才可生成计划衍生物。默认在当前回复中以可读 Markdown 表格交付，标明待验证草案、逐行证据、用户事实与建议推断；用户明确要求 CSV 或导出时才使用下述十列格式。只有用户另行明确要求本地写入，并给出或授权准确目标路径时，才可在适配器 `OUTPUT` 之外另存 `content-plan.filled.csv`。不得从当前工作目录猜测保存位置。该文件不是固定制品、不是新的 golden，也不能替换 `30-day-content-plan.csv`。
 
-衍生物沿用十列计划字段，行数按用户明确要求的周期确定。每行 `status` 固定为 `DRAFT_EVIDENCE_LINKED`，`evidence_ids` 必须非空并只引用最终报告中定义的 `N01`–`N08`。`notes` 必须同时包含 `USER_FACT:` 与 `INFERENCE:`；未提供用户事实时精确写 `USER_FACT: unknown`，并把所有建议依据放在 `INFERENCE:` 后。交付 CSV 时，任何单元格在去除前导空白后若以 `=`、`+`、`-` 或 `@` 开头，必须在实际值前加英文单引号 `'` 作为公式前缀防护。完整契约见[输出协议](output-contract.md#可选的证据关联计划)。
+CSV 导出沿用十列计划字段，行数按用户明确要求的周期确定。每行 `status` 固定为 `DRAFT_EVIDENCE_LINKED`，`evidence_ids` 必须非空并只引用最终报告中定义的 `N01`–`N08`。`notes` 必须同时包含 `USER_FACT:` 与 `INFERENCE:`；未提供用户事实时精确写 `USER_FACT: unknown`，并把所有建议依据放在 `INFERENCE:` 后。交付 CSV 时，任何单元格在去除前导空白后若以 `=`、`+`、`-` 或 `@` 开头，必须在实际值前加英文单引号 `'` 作为公式前缀防护。完整契约见[输出协议](output-contract.md#可选的证据关联计划)。
 
 报告为 `HOLD`、没有明确规划意图或无法建立有效证据引用时，不生成衍生物。即使生成，它也只是待用户审阅的证据关联草案，不代表排程、发布或效果承诺。

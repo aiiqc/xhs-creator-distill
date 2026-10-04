@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 
-ADAPTER_VERSION = "0.4.3"
+ADAPTER_VERSION = "0.5.0"
 SCHEMA_VERSION = "1.1"
 FIELD_MAP_SCHEMA_VERSION = "1.0"
 SELECTION_PROTOCOL = "pinned-recent-engagement-type-source-order-v1"
@@ -233,6 +233,11 @@ def strict_json_loads(text: str, *, subject: str) -> Any:
     except json.JSONDecodeError as exc:
         label = "JSON" if subject == "JSON" else f"{subject} JSON"
         raise InputFormatError(f"invalid {label}: {exc.msg}") from exc
+    except (ValueError, RecursionError) as exc:
+        label = "JSON" if subject == "JSON" else f"{subject} JSON"
+        raise InputFormatError(
+            f"invalid {label}: parser value or nesting limit exceeded"
+        ) from exc
 
 
 def validate_field_name(value: Any, *, context: str) -> str:

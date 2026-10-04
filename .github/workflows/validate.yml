@@ -146,3 +146,12 @@ jobs:
         run: >-
           python scripts/test_prepare_account_package.py
           AdapterTestCase.test_field_map_demo_matches_golden_outputs -v
+
+      - name: Test portable CLI and malformed-input behavior
+        run: >-
+          python scripts/test_prepare_account_package.py
+          AdapterTestCase.test_version_works_from_unrelated_cwd
+          AdapterTestCase.test_help_aliases_exit_zero_on_stdout
+          AdapterTestCase.test_help_forces_utf8_when_environment_requests_cp1252
+          AdapterTestCase.test_schema_and_encoding_errors_exit_two_without_artifacts
+          AdapterTestCase.test_json_parser_limits_exit_two_without_artifacts -v

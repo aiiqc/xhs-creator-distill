@@ -54,7 +54,7 @@
 
 | 模式 | 輸入 | 預設行為 | 適用對象 |
 | --- | --- | --- | --- |
-| `QUICK_SET` | 3–8 篇代表筆記 | 全部深析，不連網 | 追求快速、精準與隱私可控的人 |
+| `QUICK_SET` | 3–8 篇代表筆記 | 全部深析，不連網；預設先給簡潔行動稿 | 追求快速、精準與隱私可控的人 |
 | `PUBLIC_SAMPLE` | 公開帳號 URL 或唯一識別碼 | 最多清點 60 個可見項目，分層深析最多 8 篇；可能被存取控制阻擋 | 想先嘗試公開讀取的使用者 |
 | `ACCOUNT_PACKAGE` | 帳號匯出檔、檔案、資料夾或結構化集合 | 無需登入平台；先清點完整資料包，再選 3–8 篇深析 | 想避開平台登入牆、獲得資料包層級覆蓋與可複核結論的人 |
 
@@ -88,6 +88,8 @@ npx skills add aiiqc/xhs-creator-distill
 
 安裝器的可用性、目標目錄與載入方式取決於宿主，請以該宿主當前文件與命令輸出為準。此命令面向倉庫當前最新版本，並非鎖定版本的可重現安裝。
 
+透過安裝器安裝後，可執行 `npx skills update xhs-creator-distill` 只更新本 Skill。更新完成不等於宿主已載入新版；請按宿主說明重新載入並確認版本。固定 tag 或手動安裝不應據此假定已升級。
+
 ### 手動安裝
 
 ```bash
@@ -96,12 +98,12 @@ git clone https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/
 
 將 `/path/to/your/skills` 替換為實際目錄，再依宿主說明重新載入 Skill。
 
-### 固定 `v0.4.3` 安裝
+### 固定 `v0.5.0` 安裝
 
 若要重現本次已審查的發佈版本，請鎖定 tag：
 
 ```bash
-git clone --branch v0.4.3 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
+git clone --branch v0.5.0 --depth 1 https://github.com/aiiqc/xhs-creator-distill.git /path/to/your/skills/xhs-creator-distill
 ```
 
 ## 快速使用
@@ -112,8 +114,8 @@ git clone --branch v0.4.3 --depth 1 https://github.com/aiiqc/xhs-creator-distill
 選擇你目前手上最接近的一種素材：
 
 1. **已有 3–8 篇完整筆記（`QUICK_SET`）**<br>
-   一句話：`使用 $xhs-creator-distill 分析我附上的 3–8 篇筆記，輸出帶證據編號與可信度的五層內容操作系統。`<br>
-   備用方案：只有標題或摘要時，補上完整內文；暫時補不到，就要求聚焦分析，並將沒有證據的結論保留為 `HOLD`。
+   一句話：`使用 $xhs-creator-distill 分析我附上的 3–8 篇筆記，告訴我值得借鑑的方法與下一步。`<br>
+   備用方案：只有標題或摘要時，補上完整內文；獨立完整筆記不足 3 篇時保持 `HOLD`，簡潔或聚焦輸出也不降低門檻。
 2. **已有帳號匯出檔或本機資料包（`ACCOUNT_PACKAGE`，整號主路徑）**<br>
    一句話：`使用 $xhs-creator-distill 先清點我附上的帳號資料包，再選最多 8 篇深析並保留來源對應。`<br>
    備用方案：預處理傳回 `HOLD` 時，依 `manifest.json` 的原因修正欄位或素材，不要繞過資源與安全上限。
@@ -127,7 +129,7 @@ git clone --branch v0.4.3 --depth 1 https://github.com/aiiqc/xhs-creator-distill
 
 ```text
 請使用 $xhs-creator-distill，根據下方 5 篇代表筆記，
-提煉我的小紅書內容操作系統。
+輸出完整五層報告，提煉我的小紅書內容操作系統。
 
 目標：提煉可用於新帳號的選題、內容結構與表達規則。
 要求：逐項標註證據編號；區分觀察、推論與證據不足；
@@ -237,6 +239,8 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 
 ## 輸出結構
 
+一般 `QUICK_SET` 分析預設給簡潔行動稿：保留狀態、覆蓋與輸入稽核，最多給 3 個可遷移方法（附證據、可信度與限制），再給 1 個下一步和關鍵缺口。不為湊數而製造結論。需要深入時，說「展開完整五層報告」；`ACCOUNT_PACKAGE` 與 `PUBLIC_SAMPLE` 仍預設完整報告。簡潔只改變呈現，不降低 `PASS`/`HOLD`、證據或安全門檻。
+
 完整報告通常包含：
 
 1. 狀態、模式、覆蓋聲明與輸入稽核；
@@ -244,6 +248,8 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 3. 定位、選題、結構、表達、營運五層提煉；
 4. 穩定模式、例外、衝突與可信度；
 5. 可遷移規則、不可複製項目、執行清單與驗證計畫。
+
+明確要求七天計畫時，對話預設使用易讀的 Markdown 表格；要求 CSV 或匯出時保留嚴格 CSV 格式與安全規則。計畫不會因完成分析而自動產生，也不會自動儲存檔案。
 
 完整欄位與判定規則以 [輸出協定](references/output-contract.md) 為準。
 
@@ -286,16 +292,17 @@ python3 scripts/test_prepare_account_package.py AdapterTestCase.test_field_map_d
 - [x] `v0.4.1`：首屏成果預覽、三情境快速入口、PowerShell 路徑、端到端合成演練與 `HOLD` 範例。
 - [x] `v0.4.2`：修正 Windows PowerShell 在存在多個 `python` 命令候選時的確定性選擇，並納入 Windows CI 回歸。
 - [x] `v0.4.3`：固定 CLI 標準輸出與錯誤輸出為 UTF-8，修正 Windows 重新導向環境中的雙語說明編碼失敗。
+- [x] `v0.5.0`：代表筆記預設簡潔行動稿、按需展開完整五層、七天計畫採用對話表格，並提供單一 Skill 更新指引。
 - [ ] 根據真實且去識別化的樣本擴充通用匯入配方，不宣稱固定相容第三方工具。
 - [ ] 根據去識別化的使用回饋，優化取樣與證據協定。
-- [ ] 建立涵蓋五種輸出語言及完整、聚焦、`HOLD` 報告的結構驗證器；結構通過不等於語意真實。
+- [ ] 建立涵蓋五種輸出語言及簡潔、完整、聚焦、`HOLD` 報告的結構驗證器；結構通過不等於語意真實。
 - [ ] 評估「從提煉報告生成獨立 Skill」的選用流程；當前版本不提供。
 
 路線圖不構成版本承諾，優先順序會根據驗證結果與維護資源調整。
 
 ## 維護狀態
 
-當前版本為 `v0.4.3`。本版修正 Windows 重新導向環境中的雙語 CLI 輸出編碼，不改變三種模式的證據、覆蓋與安全語意。專案依 [Semantic Versioning](https://semver.org/) 記錄版本，並在 [CHANGELOG](CHANGELOG.md) 中說明變更。
+當前版本為 `v0.5.0`。本版讓代表筆記分析先給簡潔行動稿，保留按需展開的完整五層報告，並改善七天計畫在對話中的可讀性；三種模式的證據、覆蓋與安全門檻不變。專案依 [Semantic Versioning](https://semver.org/) 記錄版本，並在 [CHANGELOG](CHANGELOG.md) 中說明變更。
 
 - 一般問題與建議：使用 GitHub Issues。
 - 程式碼與文件貢獻：請先閱讀 [CONTRIBUTING.md](CONTRIBUTING.md)。
